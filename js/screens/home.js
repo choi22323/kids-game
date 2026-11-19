@@ -6,18 +6,29 @@
   let offVoice = null;
 
   async function mount(view) {
-    const [sets, recs] = await Promise.all([HG.seed.dictationSets(), HG.db.getAll('activityRecords')]);
+    const [groups, recs] = await Promise.all([HG.seed.dictationGroups(), HG.db.getAll('activityRecords')]);
     const week = recs.filter((r) => r.activity === 'dictation' && F.daysSince(r.startedAt) < 7);
     const scr = ui.screen('받아쓰기 교실', null, F.dateLabel(F.todayStr()) + ' · 최근 7일 받아쓰기 ' + week.length + '회');
     const list = h('div', { class: 'list' });
     const voiceCard = h('div', { class: 'card voice-card' });
-    scr.body.appendChild(h('div', { class: 'split' }, h('div', { class: 'split-main' }, h('p', { class: 'lead', text: '받아 쓸 문장 묶음을 골라 주세요.' }), list), voiceCard));
+    scr.body.appendChild(h('div', { class: 'split' }, h('div', { class: 'split-main' }, h('p', { class: 'lead home-lead', text: '받아 쓸 문제를 골라 주세요.' }), list), voiceCard));
     view.appendChild(scr.el);
-    ui.pagedList({ list, pager: scr.foot, items: sets, max: 4,
+    const open = (s) => { HG.screens.dictate.enterFullscreen(); HG.router.go('/dictate/' + s.id); };
+    ui.pagedList({ list, pager: scr.foot, items: groups, max: 4,
       empty: () => ui.emptyState('받아쓰기 문장이 없습니다.'),
-      render: (s) => h('div', { class: 'card row-card' },
-        h('div', { class: 'row-info' }, h('p', { class: 'strong', text: s.title }), h('p', { class: 'muted', text: s.sentences.length + '문장 · 예: ' + s.sentences.slice(0, 2).map((x) => x.text).join(' / ') + ' …' })),
-        h('div', { class: 'btn-row' }, ui.btn('시작하기', { variant: 'primary', icon: '▶', cls: 'icon-after', onClick: () => { HG.screens.dictate.enterFullscreen(); HG.router.go('/dictate/' + s.id); } }))) }).draw();
+      render: (g) => {
+        if (g.sets.length === 1) {
+          const s = g.sets[0];
+          return h('div', { class: 'card row-card' },
+            h('div', { class: 'row-info' }, h('p', { class: 'strong', text: g.name }), h('p', { class: 'muted', text: s.sentences.length + '문장 · 예: ' + s.sentences.slice(0, 2).map((x) => x.text).join(' / ') + ' …' })),
+            h('div', { class: 'btn-row' }, ui.btn('시작하기', { variant: 'primary', icon: '▶', cls: 'icon-after', onClick: () => open(s) })));
+        }
+        // 번호별로 한 문제씩: 번호 버튼
+        return h('div', { class: 'card group-card' },
+          h('p', null, h('span', { class: 'strong', text: g.name }), h('span', { class: 'muted', text: '  ·  번호를 누르면 그 문제 하나를 받아 씁니다 (' + g.sets[0].title + '~' + g.sets[g.sets.length - 1].title + ')' })),
+          h('div', { class: 'no-grid', role: 'group', 'aria-label': g.name + ' 문제 번호' },
+            g.sets.map((s) => ui.btn(s.title, { variant: 'secondary', cls: 'no-btn', ariaLabel: g.name + ' ' + s.title + ' 받아쓰기 시작', onClick: () => open(s) }))));
+      } }).draw();
     function drawVoice() {
       clear(voiceCard);
       voiceCard.appendChild(h('h2', { text: '🔊 읽어 주기 음성' }));

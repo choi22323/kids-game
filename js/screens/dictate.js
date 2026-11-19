@@ -11,7 +11,12 @@
   }
   async function mount(view, params) {
     const set = await HG.db.get('problemSets', params.id);
-    st = { view, set, inst: null };
+    st = { view, set, inst: null, next: null };
+    if (set && set.group) {
+      const g = (await HG.seed.dictationGroups()).find((x) => x.name === set.group);
+      const i = g ? g.sets.findIndex((x) => x.id === set.id) : -1;
+      if (g && i >= 0 && i + 1 < g.sets.length) st.next = g.sets[i + 1];
+    }
     if (!set || set.kind !== 'dictation') {
       view.appendChild(h('section', { class: 'screen run-fail' }, ui.emptyState('받아쓰기 문장을 찾을 수 없습니다.', [ui.btn('홈으로', { variant: 'primary', onClick: () => HG.router.go('/home') })])));
       return;
@@ -57,15 +62,16 @@
     for (let i = 0; i < total && total <= 12; i++) dots.appendChild(h('span', { class: 'dot' + (i < cur ? ' is-done' : i === cur ? ' is-cur' : '') }));
     st.progEl.append(dots, h('span', { class: 'prog-num', text: Math.min(cur + 1, total) + ' / ' + total }));
   }
+  const fullTitle = () => (st.set.group && st.set.group !== st.set.title ? st.set.group + ' · ' + st.set.title : st.set.title);
   function intro() {
     clear(st.stage);
-    setTitle('받아쓰기 · ' + st.set.title);
+    setTitle('받아쓰기 · ' + fullTitle());
     setProgress(0, 0);
     const hasVoice = HG.tts.supported() && HG.tts.voice();
     st.stage.appendChild(h('div', { class: 'intro' },
       h('div', { class: 'intro-icon', 'aria-hidden': 'true', text: '👂' }),
       h('h1', { class: 'intro-name', text: '받아쓰기' }),
-      h('p', { class: 'intro-set', text: st.set.title + ' · ' + st.set.sentences.length + '문장' }),
+      h('p', { class: 'intro-set', text: fullTitle() + ' · ' + st.set.sentences.length + '문장' }),
       h('p', { class: 'intro-msg', text: hasVoice ? '문장을 읽어 드리면 칸에 받아 써 보세요. 몇 번이든 다시 들을 수 있습니다.' : '한국어 읽어 주기 음성이 없어 강사님이 문장을 읽어 주셔야 합니다.' })));
     const go = ui.btn('시작하기', { variant: 'primary', icon: '▶', cls: 'icon-after', onClick: begin });
     go.dataset.role = 'next';
@@ -74,7 +80,7 @@
   }
   function begin() {
     clear(st.stage);
-    setTitle('받아쓰기 · ' + st.set.title);
+    setTitle('받아쓰기 · ' + fullTitle());
     st.startedAt = HG.format.nowISO();
     const items = st.set.sentences.slice().sort((a, b) => a.order - b.order);
     st.inst = HG.activities.dictation.start({ stage: st.stage, items, bar: setBar, onProgress: setProgress, onFinish: finish });
@@ -95,15 +101,23 @@
     const stars = rec ? rec.stars : 0;
     const row = h('div', { class: 'result-stars', role: 'img', 'aria-label': '별 ' + stars + '개' });
     for (let k = 0; k < 3; k++) row.appendChild(h('span', { class: 'rstar' + (k < stars ? ' is-on' : ''), style: { '--k': String(k) }, 'aria-hidden': 'true', text: '★' }));
-    const msg = done === results.length ? '모든 문장을 받아 쓰셨어요!' : done ? '끝까지 함께해 주셔서 고맙습니다!' : '다음에 함께 해 봐요.';
-    st.stage.appendChild(h('div', { class: 'result' }, row, h('h1', { class: 'result-msg', text: msg }),
-      h('p', { class: 'result-line', text: results.length + '문장 중 ' + done + '문장을 받아 쓰셨어요.' })));
+    const right = results.filter((r) => r.result === 'first' || r.result === 'retry').length;
+    const single = results.length === 1;
+    const msg = single ? (right ? '정확하게 쓰셨어요!' : done ? '끝까지 써 주셔서 고맙습니다!' : '다음에 함께 해 봐요.')
+      : done === results.length ? '모든 문장을 받아 쓰셨어요!' : done ? '끝까지 함께해 주셔서 고맙습니다!' : '다음에 함께 해 봐요.';
+    const line = single ? fullTitle() + ' 받아쓰기를 마쳤습니다.' : results.length + '문장 중 ' + done + '문장을 받아 쓰셨어요.';
+    st.stage.appendChild(h('div', { class: 'result' }, row, h('h1', { class: 'result-msg', text: msg }), h('p', { class: 'result-line', text: line })));
     if (stars) HG.audio.play('complete');
-    const again = ui.btn('처음부터 다시', { icon: '↺', onClick: intro });
-    const home = ui.btn('홈으로', { variant: 'accent', icon: '🏠', onClick: () => HG.router.go('/home') });
-    home.dataset.role = 'next';
-    setBar([again], [], [home]);
-    setTimeout(() => home.focus(), 30);
+    const again = ui.btn(single ? '이 문제 다시' : '처음부터 다시', { icon: '↺', onClick: intro });
+    const home = ui.btn('홈으로', { variant: st.next ? 'secondary' : 'accent', icon: '🏠', onClick: () => HG.router.go('/home') });
+    const right2 = [home];
+    if (st.next) {
+      const nx = ui.btn('다음 문제: ' + st.next.title, { variant: 'accent', icon: '▶', cls: 'icon-after', onClick: () => HG.router.go('/dictate/' + st.next.id) });
+      nx.dataset.role = 'next';
+      right2.push(nx);
+    } else home.dataset.role = 'next';
+    setBar([again], [], right2);
+    setTimeout(() => (st.view.querySelector('.run-bar [data-role="next"]') || home).focus(), 30);
   }
   async function exitFlow() {
     if (HG.pin.isSet() && !(await HG.pin.ask('나가려면 PIN을 입력해 주세요.'))) return;

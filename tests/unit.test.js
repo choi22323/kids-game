@@ -24,11 +24,17 @@
     it('설치 후 받아쓰기 세트만 목록에 나옴', async () => {
       await HG.db.put('problemSets', { id: 'old-set', title: '이전 자료', words: [], sentences: [] });
       const list = await HG.seed.dictationSets();
-      assert.eq(list.map((s) => s.id).sort(), ['seed-anthem-1', 'seed-woorimal-2']);
+      assert.eq(list.length, 11);
+      assert.ok(!list.some((s) => s.id === 'old-set' || s.id === 'seed-woorimal-2'));
+    });
+    it('이전 버전의 10문장 묶음(seed-woorimal-2)은 설치 때 지워짐', async () => {
+      await HG.db.put('problemSets', { id: 'seed-woorimal-2', kind: 'dictation', title: '옛 묶음', sentences: [] });
+      await HG.seed.install(true);
+      assert.eq(await HG.db.get('problemSets', 'seed-woorimal-2'), undefined);
     });
     it('재설치해도 중복 없음', async () => {
       await HG.seed.install(true); await HG.seed.install(true);
-      assert.eq((await HG.seed.dictationSets()).length, 2);
+      assert.eq((await HG.seed.dictationSets()).length, 11);
     });
   });
 
@@ -41,11 +47,11 @@
       assert.eq(HG.activities.dictation.rowsOf(13), [7, 6]);
     });
     it('애국가 문장은 한 줄(10칸 이하)', () => HG.seed.SETS.find((x) => x.id === 'seed-anthem-1').sentences.forEach((x) => assert.ok(HG.activities.dictation.cells(x.text).length <= 10, x.text)));
-    it('우리말 우리글 10문장(86~95), 긴 문장은 두 줄', () => {
-      const s = HG.seed.SETS.find((x) => x.id === 'seed-woorimal-2');
-      assert.eq(s.sentences.length, 10);
-      assert.eq(s.sentences[0].id, 's86');
-      assert.eq(s.sentences[9].id, 's95');
+    it('우리말 우리글 86~95번은 번호마다 한 문제(한 문장)씩', async () => {
+      const g = (await HG.seed.dictationGroups()).find((x) => x.name === '2. 우리말 우리글');
+      assert.eq(g.sets.map((s) => s.title), ['86번', '87번', '88번', '89번', '90번', '91번', '92번', '93번', '94번', '95번']);
+      assert.ok(g.sets.every((s) => s.sentences.length === 1));
+      assert.eq(g.sets[1].sentences[0].text, '혀가 윗잇몸에 닿는 모양');
       assert.eq(HG.activities.dictation.rowsOf(HG.activities.dictation.cells('네 몫의 뱃삯을 가져오너라.').length), [8, 7]);
     });
     it('문장부호 칸: 비우면 틀림(문장부호 빠짐), 무언가 쓰면 모양은 판정하지 않고 맞음', () => {
