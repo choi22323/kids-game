@@ -1,0 +1,3 @@
+body { font-family: "Malgun Gothic", sans-serif; font-size: 20px; margin: 24px; background: #FAF7F0; color: #172332; }
+.pass { color: #2F6B4F; } .fail { color: #8E2C2C; font-weight: 700; }
+#summary { font-size: 28px; font-weight: 700; }

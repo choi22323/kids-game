@@ -75,6 +75,7 @@
 │  │  ├─ scoring.js           # 점수·별 계산 (FEATURES.md F-10)
 │  │  ├─ backup.js            # 내보내기/가져오기/검증/마이그레이션
 │  │  ├─ ids.js               # ID 생성(crypto.randomUUID 폴백 포함)
+│  │  ├─ hash.js              # SHA-256(폴백 포함)·PBKDF2
 │  │  └─ format.js            # 날짜·숫자 표시
 │  ├─ data/
 │  │  └─ seed.js              # 내장 샘플 데이터 15세트 (DATA_MODEL.md §6)
@@ -83,8 +84,10 @@
 │  │  ├─ components.js        # 버튼, 카드, 페이지네이션
 │  │  ├─ dialog.js            # 확인/경고 대화상자 (포커스 트랩)
 │  │  ├─ toast.js             # 알림 + 되돌리기
-│  │  └─ feedback.js          # 정답/오답/칭찬 애니메이션 + live region
+│  │  ├─ feedback.js          # 정답/오답/칭찬 애니메이션 + live region
+│  │  └─ images.js            # 그림 표시·업로드 축소/재인코딩
 │  ├─ activities/
+│  │  ├─ common.js            # 섞기, 조사, 오답 보기 선택
 │  │  ├─ trace.js             # ① 따라쓰기 (캔버스·커버리지 판정)
 │  │  ├─ chosung.js           # ② 초성 맞히기
 │  │  ├─ match.js             # ③ 선 긋기 짝짓기 (SVG 선 오버레이)
