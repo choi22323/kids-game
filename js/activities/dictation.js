@@ -51,15 +51,17 @@
       s = { item, strokes: [], cur: null, active: null, rect: null, revealed: false, listens: 0, attempts: 0, layout: null };
       const listenBtn = ui.btn('다시 듣기', { variant: 'primary', icon: '🔊', cls: 'btn-listen', onClick: () => listen() });
       const slowBtn = ui.btn('천천히 한 글자씩', { icon: '🐢', onClick: () => listen(true) });
-      s.count = h('p', { class: 'dict-count', 'aria-live': 'polite' });
-      s.status = h('p', { class: 'dict-status', 'aria-live': 'polite' });
+      // 들은 횟수·읽는 중 안내는 높이·너비가 고정된 한 줄에 둔다 (글이 바뀌어도 쓰는 칸이 움직이지 않게)
+      s.count = h('span', { class: 'dict-count', text: '들은 횟수: 0번' });
+      s.status = h('span', { class: 'dict-status', 'aria-live': 'polite' });
+      const info = h('p', { class: 'dict-info' }, s.count, s.status);
       const top = h('div', { class: 'dict-top' },
         h('p', { class: 'act-ask', text: (idx + 1) + '번 문장 — 잘 듣고 받아 써 보세요' }),
         h('div', { class: 'btn-row center' }, listenBtn, slowBtn),
-        s.count, s.status);
+        info);
       if (!HG.tts.supported() || !HG.tts.voice()) {
         top.appendChild(h('div', { class: 'notice dict-novoice' },
-          h('span', { text: '한국어 음성이 없어요. 강사님이 읽어 주세요.' }),
+          h('span', { class: 'dict-novoice-text', text: '한국어 음성이 없어요. 강사님이 읽어 주세요.' }),
           ui.btn('강사용 문장 보기', { onClick: () => HG.dialog.alert('강사용 — ' + (idx + 1) + '번 문장', item.text) })));
       }
       s.area = h('div', { class: 'dict-area' });

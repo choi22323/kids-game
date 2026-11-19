@@ -58,6 +58,36 @@
   });
 
   describe('읽어 주기', () => {
+    it('친근한 목소리 자동 선택: 이 컴퓨터의 자연스러운 음성 우선, 설정에서 고른 음성 존중', async () => {
+      const fake = [
+        { name: 'Microsoft Heami - Korean', lang: 'ko-KR', localService: true },
+        { name: 'Microsoft SunHi Online (Natural) - Korean', lang: 'ko-KR', localService: false },
+        { name: 'Microsoft SunHi (Natural) - Korean', lang: 'ko-KR', localService: true },
+        { name: 'English', lang: 'en-US', localService: true }
+      ];
+      const orig = speechSynthesis.getVoices;
+      speechSynthesis.getVoices = () => fake;
+      const before = HG.state.settings.ttsVoice;
+      HG.state.settings.ttsVoice = '';
+      assert.eq(HG.tts.pick().name, 'Microsoft SunHi (Natural) - Korean');
+      assert.eq(HG.tts.koreanVoices().length, 3);
+      HG.state.settings.ttsVoice = 'Microsoft Heami - Korean';
+      assert.eq(HG.tts.pick().name, 'Microsoft Heami - Korean');
+      HG.state.settings.ttsVoice = '없는 음성';
+      assert.eq(HG.tts.pick().name, 'Microsoft SunHi (Natural) - Korean');
+      HG.state.settings.ttsVoice = before;
+      speechSynthesis.getVoices = orig;
+      HG.tts.pick();
+    });
+    it('목소리 높낮이(기본 110%)가 읽기에 적용됨', () => {
+      let got = null;
+      const orig = speechSynthesis.speak;
+      speechSynthesis.speak = (u) => { got = u.pitch; };
+      HG.tts.speak('시험');
+      speechSynthesis.speak = orig;
+      assert.near(got, 1.1, 0.01);
+      assert.ok(!HG.repo.validSetting('ttsPitch', 2));
+    });
     it('한 글자씩 읽기: 글자마다 따로, 띄어쓰기는 건너뛰고 칸 번호 알림', async () => {
       const spoken = [], idx = [];
       const orig = speechSynthesis.speak;

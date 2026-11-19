@@ -12,6 +12,8 @@
     volume: { def: 0.6, ok: (v) => typeof v === 'number' && v >= 0 && v <= 1 },
     reduceMotion: { def: 'auto', ok: (v) => ['auto', 'on', 'off'].includes(v) },
     dictGuide: { def: 'off', ok: (v) => ['off', 'always'].includes(v) },
+    ttsVoice: { def: '', ok: (v) => typeof v === 'string' && v.length <= 200 },
+    ttsPitch: { def: 1.1, ok: (v) => typeof v === 'number' && v >= 0.8 && v <= 1.4 },
     ttsRate: { def: 0.85, ok: (v) => typeof v === 'number' && v >= 0.5 && v <= 1.2 },
     traceStrokeWidth: { def: 24, ok: (v) => Number.isInteger(v) && v >= 12 && v <= 40 },
     shuffleQuestions: { def: false, ok: (v) => typeof v === 'boolean' },

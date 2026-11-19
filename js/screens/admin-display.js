@@ -35,8 +35,12 @@
       drawPreview(s.traceStrokeWidth);
     } else if (tab === 'sound') {
       ui.pagedNodes(panel, [
-        row('읽기 속도', h('div', { class: 'btn-row' }, ui.stepper({ label: '읽기 속도', value: s.ttsRate, min: 0.5, max: 1.2, step: 0.05, format: (v) => (v <= 0.7 ? '아주 천천히' : v <= 0.85 ? '천천히' : v <= 1 ? '보통' : '조금 빠르게') + ' (' + Math.round(v * 100) + '%)', onChange: (v) => set('ttsRate', v) }),
-          ui.btn('들어 보기', { icon: '🔊', onClick: () => HG.tts.speak('무궁화 꽃이 피었습니다.') })), HG.tts.voice() ? '음성: ' + HG.tts.voiceLabel() : '한국어 음성을 찾지 못했습니다.'),
+        row('목소리', h('div', { class: 'btn-row' },
+          ui.select([{ value: '', label: '자동 (가장 친근한 목소리)' }].concat(HG.tts.koreanVoices().map((v) => ({ value: v.name, label: v.name + (v.localService ? ' · 이 컴퓨터' : ' · 인터넷 필요') }))), s.ttsVoice, (v) => set('ttsVoice', v), '목소리'),
+          ui.btn('들어 보기', { icon: '🔊', onClick: () => HG.tts.speak('안녕하세요. 오늘도 같이 받아쓰기 해 볼까요?') })),
+          HG.tts.koreanVoices().length ? '이 컴퓨터에서 쓸 수 있는 한국어 목소리 ' + HG.tts.koreanVoices().length + '개 · 지금: ' + (HG.tts.voiceLabel() || '없음') : '한국어 목소리를 찾지 못했습니다. 컴퓨터에 한국어 음성을 설치해 주세요.'),
+        row('목소리 높낮이', ui.stepper({ label: '목소리 높낮이', value: s.ttsPitch, min: 0.8, max: 1.4, step: 0.05, format: (v) => (v < 0.95 ? '낮고 차분하게' : v <= 1.05 ? '보통' : v <= 1.2 ? '조금 밝게' : '밝게') + ' (' + Math.round(v * 100) + '%)', onChange: (v) => set('ttsPitch', v) })),
+        row('읽기 속도', ui.stepper({ label: '읽기 속도', value: s.ttsRate, min: 0.5, max: 1.2, step: 0.05, format: (v) => (v <= 0.7 ? '아주 천천히' : v <= 0.85 ? '천천히' : v <= 1 ? '보통' : '조금 빠르게') + ' (' + Math.round(v * 100) + '%)', onChange: (v) => set('ttsRate', v) })),
         row('효과음', h('div', { class: 'btn-row' }, ui.toggle('효과음 켜기', s.soundEnabled, (v) => set('soundEnabled', v)),
           ui.btn('들어 보기', { icon: '♪', onClick: () => { if (!HG.audio.play('correct')) HG.toast.show('소리가 꺼져 있거나 이 브라우저에서 소리를 낼 수 없습니다.'); } }))),
         row('음량', ui.stepper({ label: '음량', value: Math.round(s.volume * 10), min: 0, max: 10, step: 1, format: (v) => v * 10 + '%', onChange: (v) => set('volume', v / 10) })),

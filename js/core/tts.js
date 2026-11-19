@@ -6,17 +6,36 @@
   const supported = () => 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
   let voice = null;
   let listeners = [];
+  /** 더 부드럽고 친근하게 들리는 음성일수록 높은 점수 (이름 기준, 기기마다 다름 — 확인 필요) */
+  function friendliness(v) {
+    const n = v.name || '';
+    let s = 0;
+    if (v.localService) s += 100;                         // 인터넷 없이 되는 음성 우선
+    if (/natural|neural|자연/i.test(n)) s += 40;          // 신경망(자연스러운) 음성
+    if (/sunhi|선희|yuna|유나|seoyeon|서연|jimin|지민/i.test(n)) s += 20; // 부드러운 여성 음성
+    if (/heami|해미/i.test(n)) s += 10;
+    if (/google/i.test(n)) s += 5;
+    return s;
+  }
+  function koreanVoices() {
+    if (!supported()) return [];
+    return speechSynthesis.getVoices().filter((v) => /^ko/i.test(v.lang)).sort((a, b) => friendliness(b) - friendliness(a));
+  }
+  /** 설정에서 고른 음성 → 없으면 가장 친근한 음성 */
   function pick() {
     if (!supported()) return null;
-    const ko = speechSynthesis.getVoices().filter((v) => /^ko/i.test(v.lang));
-    voice = ko.find((v) => v.localService) || ko[0] || null;
+    const ko = koreanVoices();
+    const want = HG.state.settings && HG.state.settings.ttsVoice;
+    voice = (want && ko.find((v) => v.name === want)) || ko[0] || null;
     listeners.forEach((f) => f(voice));
     return voice;
   }
+  const pitch = () => (HG.state.settings && HG.state.settings.ttsPitch) || 1.1;
   if (supported()) {
     pick();
     speechSynthesis.addEventListener('voiceschanged', pick);
   }
+  HG.events.on('settings', (e) => { if (!e || !e.key || e.key === 'ttsVoice') pick(); });
   /** @returns {boolean} 읽기를 시작했는지 */
   function speak(text, opts) {
     opts = opts || {};
@@ -26,7 +45,7 @@
     u.lang = 'ko-KR';
     if (voice) { try { u.voice = voice; } catch (e) { /* 음성 지정 실패 시 lang으로 고름 */ } }
     u.rate = opts.rate || (HG.state.settings && HG.state.settings.ttsRate) || 0.85;
-    u.pitch = 1;
+    u.pitch = pitch();
     u.volume = 1;
     let done = false;
     const end = (ok) => { if (done) return; done = true; if (opts.onend) opts.onend(ok); };
@@ -62,7 +81,7 @@
       u.lang = 'ko-KR';
       if (voice) { try { u.voice = voice; } catch (e) { /* 무시 */ } }
       u.rate = opts.rate || 0.7;
-      u.pitch = 1; u.volume = 1;
+      u.pitch = pitch(); u.volume = 1;
       let fired = false;
       const after = (ok) => {
         if (fired || my !== seq) return;
@@ -81,7 +100,7 @@
   }
   function stop() { seq++; clearTimeout(timer); if (supported()) speechSynthesis.cancel(); }
   HG.tts = {
-    supported, speak, speakSyllables, stop, pick,
+    supported, speak, speakSyllables, stop, pick, koreanVoices,
     voice: () => voice,
     voiceLabel: () => (voice ? voice.name + (voice.localService ? ' (이 컴퓨터)' : ' (인터넷 필요할 수 있음)') : ''),
     onVoice(f) { listeners.push(f); return () => { listeners = listeners.filter((x) => x !== f); }; }
