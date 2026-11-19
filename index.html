@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob: data:; font-src 'self'; connect-src 'none'; media-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="referrer" content="no-referrer">
+  <title>우리들의 즐거운 한글 교실</title>
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/activities.css">
+  <link rel="stylesheet" href="css/print.css">
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="#/home" aria-label="우리들의 즐거운 한글 교실 홈"><span class="brand-mark" aria-hidden="true">가</span><span class="brand-text">우리들의 즐거운 한글 교실</span></a>
+      <nav id="mainnav" class="mainnav" aria-label="주 메뉴"></nav>
+    </header>
+    <main id="view" class="view" tabindex="-1"></main>
+  </div>
+  <div id="live" class="sr-only" aria-live="polite"></div>
+  <div id="feedback-layer" class="feedback-layer" aria-hidden="true"></div>
+  <div id="toast-host" class="toast-host" role="status"></div>
+  <div id="dialog-host"></div>
+  <div id="print-root"></div>
+  <div id="orientation-guard" class="orientation-guard"><p>화면이 작거나 세로로 놓여 있습니다.<br>화면을 가로로 놓거나 더 큰 화면에서 열어 주세요.</p></div>
+  <noscript><p class="noscript">이 프로그램은 JavaScript가 필요합니다. Chrome 또는 Edge로 열어 주세요.</p></noscript>
+
+  <script defer src="js/core/namespace.js"></script>
+  <script defer src="js/core/ids.js"></script>
+  <script defer src="js/core/format.js"></script>
+  <script defer src="js/core/hash.js"></script>
+  <script defer src="js/core/hangul.js"></script>
+  <script defer src="js/core/db.js"></script>
+  <script defer src="js/core/repo.js"></script>
+  <script defer src="js/core/validate.js"></script>
+  <script defer src="js/core/privacy.js"></script>
+  <script defer src="js/core/scoring.js"></script>
+  <script defer src="js/core/audio.js"></script>
+  <script defer src="js/data/seed.js"></script>
+  <script defer src="js/ui/dom.js"></script>
+  <script defer src="js/ui/toast.js"></script>
+  <script defer src="js/ui/dialog.js"></script>
+  <script defer src="js/ui/components.js"></script>
+  <script defer src="js/ui/feedback.js"></script>
+  <script defer src="js/ui/images.js"></script>
+  <script defer src="js/core/backup.js"></script>
+  <script defer src="js/core/router.js"></script>
+  <script defer src="js/activities/common.js"></script>
+  <script defer src="js/activities/trace.js"></script>
+  <script defer src="js/activities/chosung.js"></script>
+  <script defer src="js/activities/blank.js"></script>
+  <script defer src="js/activities/match.js"></script>
+  <script defer src="js/screens/pin.js"></script>
+  <script defer src="js/screens/home.js"></script>
+  <script defer src="js/screens/quick.js"></script>
+  <script defer src="js/screens/plans.js"></script>
+  <script defer src="js/screens/plan-edit.js"></script>
+  <script defer src="js/screens/run.js"></script>
+  <script defer src="js/screens/summary.js"></script>
+  <script defer src="js/screens/print.js"></script>
+  <script defer src="js/screens/stats.js"></script>
+  <script defer src="js/screens/admin-home.js"></script>
+  <script defer src="js/screens/admin-sets.js"></script>
+  <script defer src="js/screens/admin-set-edit.js"></script>
+  <script defer src="js/screens/admin-topics.js"></script>
+  <script defer src="js/screens/admin-images.js"></script>
+  <script defer src="js/screens/admin-backup.js"></script>
+  <script defer src="js/screens/admin-display.js"></script>
+  <script defer src="js/app.js"></script>
+</body>
+</html>

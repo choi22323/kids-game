@@ -1,0 +1,47 @@
+/* A4 학습지 (FEATURES.md F-11). 흑백 인쇄에서도 판독 가능하게 구성 */
+#print-root { display: none; }
+.ws-page { width: 210mm; height: 297mm; padding: 15mm; background: #fff; color: #000; font-family: var(--font-family); font-size: calc(16pt * var(--k, 1)); line-height: 1.4; overflow: hidden; display: flex; flex-direction: column; }
+.ws-head { height: 30mm; border-bottom: 1.2mm solid #000; margin-bottom: 0; display: flex; flex-direction: column; justify-content: flex-end; padding-bottom: 2mm; flex: none; }
+.ws-head.is-small { height: 14mm; }
+.ws-org { font-size: 12pt; }
+.ws-title { font-size: 22pt; line-height: 1.2; }
+.ws-meta { font-size: 13pt; }
+.ws-sec { height: 14mm; display: flex; align-items: flex-end; padding-bottom: 1.5mm; font-size: calc(16pt * var(--k, 1)); font-weight: 700; border-bottom: .4mm solid #888; flex: none; margin: 0; }
+.ws-row { flex: none; overflow: hidden; }
+.ws-trace { display: flex; flex-direction: column; justify-content: center; gap: 1mm; padding: 2mm 0; }
+.ws-cells { display: flex; gap: 1mm; }
+.ws-cell { width: var(--cs); height: var(--cs); border: .5mm solid #000; display: inline-grid; place-items: center; font-size: calc(var(--cs) * .7); line-height: 1;
+  background-image: linear-gradient(to right, transparent calc(50% - .15mm), #bbb calc(50% - .15mm), #bbb calc(50% + .15mm), transparent calc(50% + .15mm)),
+  linear-gradient(to bottom, transparent calc(50% - .15mm), #bbb calc(50% - .15mm), #bbb calc(50% + .15mm), transparent calc(50% + .15mm)); }
+.ws-cell.is-guide { color: #b5b5b5; }
+.ws-cho { height: calc(20mm * var(--k, 1)); display: grid; grid-template-columns: 1fr 1fr; align-items: center; gap: 8mm; }
+.ws-cho-item { display: flex; align-items: center; gap: 4mm; }
+.ws-cho-q { font-size: calc(26pt * var(--k, 1)); font-weight: 700; letter-spacing: 2mm; }
+.ws-line { display: inline-block; width: calc(var(--n) * 14mm * var(--k, 1)); border-bottom: .5mm solid #000; height: 10mm; }
+.ws-blank { height: calc(24mm * var(--k, 1)); display: flex; flex-direction: column; justify-content: center; }
+.ws-sent { font-size: calc(18pt * var(--k, 1)); }
+.ws-gap { display: inline-block; width: calc(var(--n) * 10mm * var(--k, 1) + 6mm); border-bottom: .5mm solid #000; height: 1em; margin: 0 1mm; }
+.ws-opts { font-size: calc(14pt * var(--k, 1)); color: #333; }
+.ws-match { height: calc(24mm * var(--k, 1)); display: flex; align-items: center; gap: 4mm; }
+.ws-pic { width: calc(20mm * var(--k, 1)); height: calc(20mm * var(--k, 1)); font-size: calc(40pt * var(--k, 1)); display: inline-grid; place-items: center; }
+img.ws-pic { object-fit: contain; }
+.ws-dot { width: 3.5mm; height: 3.5mm; border-radius: 50%; background: #000; flex: none; }
+.ws-space { flex: 1; }
+.ws-mword { width: 50mm; font-size: calc(20pt * var(--k, 1)); font-weight: 700; }
+.ws-key .ws-sec { margin-top: 4mm; }
+.ws-key p, .ws-key li { font-size: 14pt; }
+.print-doc { font-family: var(--font-family); color: #000; }
+
+@media print {
+  @page { size: A4 portrait; margin: 0; }
+  html, body { height: auto; overflow: visible; background: #fff; }
+  body > *:not(#print-root) { display: none !important; }
+  #print-root { display: block; }
+  .ws-page { box-shadow: none; transform: none; break-after: page; page-break-after: always; }
+  .ws-page:last-child { break-after: auto; page-break-after: auto; }
+  .ws-row, .ws-sec { break-inside: avoid; }
+  body.printing-doc #print-root { padding: 12mm; }
+  .print-doc .card { box-shadow: none; border: .4mm solid #999; }
+  .print-doc .kpi-value, .print-doc .bar-fill { color: #000; }
+  .print-doc .bar-fill { background: #555; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+}

@@ -1,0 +1,46 @@
+/* 디자인 토큰 — UI_UX.md §2와 1:1. 최소값 아래로 내려가지 않는다. */
+:root {
+  --font-scale: 1;
+  --font-family: "Malgun Gothic", "맑은 고딕", "Apple SD Gothic Neo", "Noto Sans KR", "Noto Sans CJK KR", sans-serif;
+
+  --color-bg: #FAF7F0;
+  --color-surface: #FFFFFF;
+  --color-ink: #172332;
+  --color-ink-sub: #3D4A5C;
+  --color-navy: #1E3A5F;
+  --color-navy-press: #152B47;
+  --color-gold: #B8893A;
+  --color-gold-soft: #F3E7CF;
+  --color-line: #D9D2C3;
+  --color-guide: #C9C2B4;
+  --color-ink-stroke: #172332;
+  --color-success: #2F6B4F;
+  --color-retry: #9A5B13;
+  --color-danger: #8E2C2C;
+  --color-focus: #B8893A;
+
+  --fs-body: calc(max(24px, 2.6vh) * var(--font-scale));
+  --fs-button: calc(max(28px, 2.96vh) * var(--font-scale));
+  --fs-title: calc(max(42px, 4.4vh) * var(--font-scale));
+  --fs-word: calc(max(64px, 8.9vh) * var(--font-scale));
+  --fs-chosung: calc(max(64px, 13vh) * var(--font-scale));
+  --fs-sentence: calc(max(64px, 6.7vh) * var(--font-scale));
+  --fs-caption: max(24px, 2.2vh);
+  --fs-nav: max(28px, 2.6vh);
+
+  --touch-min: max(80px, 8.3vh);
+  --touch-gap: max(20px, 2vh);
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 48px;
+  --space-6: 64px;
+  --radius: 16px;
+  --edge-safe: 32px;
+  --bar-h: max(96px, 9vh);
+  --shadow-card: 0 4px 16px rgba(23, 35, 50, .08);
+}
+@media (max-height: 800px) {
+  :root { --space-4: 24px; --space-5: 32px; --edge-safe: 24px; }
+}

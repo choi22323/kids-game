@@ -1,0 +1,54 @@
+/* 앱 셸: 100vh 고정, 스크롤 없음 (UI_UX.md §4) */
+.app-shell { display: grid; grid-template-rows: var(--bar-h) minmax(0, 1fr); height: 100vh; height: 100dvh; overflow: hidden; }
+.topbar { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--edge-safe); background: var(--color-navy); color: #fff; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 12px; text-decoration: none; font-weight: 700; font-size: var(--fs-nav); white-space: nowrap; min-height: 80px; }
+.brand-mark { display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 12px; background: var(--color-gold); color: #fff; font-size: 32px; }
+.mainnav { display: flex; gap: 8px; margin-left: auto; min-width: 0; }
+.navlink { display: inline-flex; align-items: center; gap: 8px; min-height: 80px; padding: 0 18px; border-radius: 12px; text-decoration: none; font-size: var(--fs-nav); font-weight: 700; white-space: nowrap; border-bottom: 4px solid transparent; }
+.navlink:hover { background: rgba(255, 255, 255, .08); }
+.navlink[aria-current="page"] { background: rgba(255, 255, 255, .12); border-bottom-color: var(--color-gold); }
+@media (max-width: 1700px) { .brand-text { display: none; } }
+@media (max-width: 1400px) { .nav-icon { display: none; } .navlink { padding: 0 14px; } }
+
+.view { min-height: 0; overflow: hidden; position: relative; }
+.screen { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 100%; gap: var(--space-2); padding: var(--space-3) var(--edge-safe) var(--space-2); }
+.screen-head { display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); min-width: 0; }
+.screen-title { display: flex; align-items: baseline; gap: var(--space-3); flex-wrap: wrap; min-width: 0; }
+.screen-title .sub { color: var(--color-ink-sub); }
+.screen-body { min-height: 0; overflow: hidden; position: relative; display: flex; flex-direction: column; gap: var(--space-2); }
+.screen-foot { display: flex; justify-content: flex-end; align-items: center; gap: var(--touch-gap); min-height: 0; }
+.screen-foot:empty { display: none; }
+.fill { display: flex; flex-direction: column; gap: var(--space-3); min-height: 0; flex: 1; }
+.lead { font-size: calc(var(--fs-body) * 1.1); }
+
+/* 수업 모드 */
+body.run-mode .app-shell { grid-template-rows: 0 minmax(0, 1fr); }
+body.run-mode .topbar { display: none; }
+.run { display: grid; grid-template-rows: var(--bar-h) minmax(0, 1fr) auto; height: 100%; }
+.run-top { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--edge-safe); background: var(--color-navy); color: #fff; min-width: 0; }
+.run-title { font-size: var(--fs-button); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; flex: 1; }
+.run-sub { font-weight: 400; opacity: .85; }
+.run-progress { display: flex; align-items: center; gap: 12px; font-size: var(--fs-body); white-space: nowrap; }
+.dots { display: inline-flex; gap: 8px; }
+.dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid #fff; opacity: .7; }
+.dot.is-done { background: var(--color-gold); border-color: var(--color-gold); opacity: 1; }
+.dot.is-cur { background: #fff; opacity: 1; }
+.run-controls { display: flex; gap: 12px; }
+.run-controls .btn { min-height: 72px; font-size: var(--fs-body); padding: 0 20px; }
+.run-stage { position: relative; min-height: 0; overflow: hidden; padding: var(--space-3) var(--edge-safe); display: flex; flex-direction: column; }
+.run-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--touch-gap); padding: var(--space-2) var(--edge-safe) var(--space-3); border-top: 2px solid var(--color-line); background: var(--color-surface); }
+.run-bar-l, .run-bar-c, .run-bar-r { display: flex; gap: var(--touch-gap); }
+.run-bar-c { justify-content: center; }
+.run-bar-r { justify-content: flex-end; }
+.run-fail { place-items: center; }
+
+/* 방향·크기 안내 (학습 화면) */
+.orientation-guard { display: none; position: fixed; inset: 0; z-index: 90; background: var(--color-bg); place-items: center; text-align: center; padding: 32px; font-size: var(--fs-title); font-weight: 700; }
+@media (orientation: portrait), (max-width: 1100px), (max-height: 600px) {
+  body.run-mode .orientation-guard { display: grid; }
+}
+
+.boot { height: 100%; display: grid; place-content: center; justify-items: center; gap: var(--space-4); text-align: center; padding: var(--space-4); }
+.boot-bar { width: 480px; max-width: 80vw; height: 16px; border-radius: 8px; background: var(--color-line); overflow: hidden; }
+.boot-bar span { display: block; height: 100%; width: 40%; background: var(--color-gold); animation: boot 1.2s ease-in-out infinite; }
+@keyframes boot { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
