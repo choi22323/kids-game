@@ -54,12 +54,7 @@
       assert.eq(g.sets[1].sentences[0].text, '혀가 윗잇몸에 닿는 모양');
       assert.eq(HG.activities.dictation.rowsOf(HG.activities.dictation.cells('네 몫의 뱃삯을 가져오너라.').length), [8, 7]);
     });
-    it('문장부호 칸: 비우면 틀림(문장부호 빠짐), 무언가 쓰면 모양은 판정하지 않고 맞음', () => {
-      const c = document.createElement('canvas'); c.width = 200; c.height = 200;
-      assert.eq(HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '.' }).reason, 'empty');
-      const x = c.getContext('2d'); x.beginPath(); x.arc(60, 160, 14, 0, 7); x.fill();
-      assert.ok(HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '.' }).ok);
-    });
+    it('문장부호도 한 칸', () => assert.eq(HG.activities.dictation.cells('좋니?'), ['좋', '니', '?']));
   });
 
   describe('읽어 주기', () => {
@@ -107,43 +102,14 @@
     });
   });
 
-  describe('정답 판정', () => {
-    const canvas = (draw) => { const c = document.createElement('canvas'); c.width = 200; c.height = 200; const x = c.getContext('2d'); x.lineWidth = 14; x.lineCap = 'round'; if (draw) draw(x); return c; };
-    it('헷갈리는 글자 후보에 정답 포함, 중복 없음', () => {
-      const c = HG.hw.candidates('물');
-      assert.ok(c.includes('물') && c.includes('불') && c.includes('밀') && c.includes('무'));
-      assert.eq(new Set(c).size, c.length);
-    });
-    it('빈 칸은 틀림', () => assert.eq(HG.hw.judgeBox(canvas(), { x: 0, y: 0, size: 200, ch: '물' }).reason, 'empty'));
-    it('띄어쓰기 칸: 비어 있으면 맞음, 글씨가 있으면 틀림', () => {
-      assert.ok(HG.hw.judgeBox(canvas(), { x: 0, y: 0, size: 200, ch: ' ' }).ok);
-      const r = HG.hw.judgeBox(canvas((x) => { x.beginPath(); x.moveTo(40, 100); x.lineTo(160, 100); x.stroke(); }), { x: 0, y: 0, size: 200, ch: ' ' });
-      assert.eq([r.ok, r.reason], [false, 'space']);
-    });
-    it('가로줄 하나는 "물"로 인정하지 않음', () => {
-      const r = HG.hw.judgeBox(canvas((x) => { x.beginPath(); x.moveTo(30, 100); x.lineTo(170, 100); x.stroke(); }), { x: 0, y: 0, size: 200, ch: '물' });
-      assert.ok(!r.ok);
-    });
-    it('설정 기본값: 흐린 글씨 없음, 자동 판정 켜짐, 맞음 기준 일치도 60%', () => {
+  describe('정답 비교', () => {
+    it('설정 기본값: 흐린 글씨 없음, 자동 판정 설정 없음', () => {
       const d = HG.repo.defaults();
-      assert.eq([d.dictGuide, d.dictJudge, d.dictMinPct], ['off', true, 60]);
+      assert.eq(d.dictGuide, 'off');
+      assert.ok(!('dictJudge' in d) && !('dictMinPct' in d));
+      assert.ok(!HG.repo.validSetting('dictGuide', 'after'));
     });
-    it('일치도: 같은 글자 ≥ 90%, 기준(%)을 높이면 같은 글씨도 틀림이 될 수 있음', () => {
-      const c = canvas((x) => { x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '500 144px sans-serif'; x.fillText('물', 100, 106); });
-      const r = HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '물' });
-      assert.ok(r.ok && r.pct >= 90, JSON.stringify(r));
-      assert.ok(!HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '물' }, { minPct: 101 }).ok);
-    });
-    it('일치도: 전혀 다른 글자는 낮음', () => {
-      const c = canvas((x) => { x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '500 144px sans-serif'; x.fillText('ㅣ', 100, 106); });
-      const r = HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '물' });
-      assert.ok(!r.ok && r.pct < 60, JSON.stringify(r));
-    });
-    it('틀림 결과는 별 계산에 참여 점수로 반영', () => {
-      const r = S.buildRecord({ items: [item('first'), item('wrong')], activity: 'dictation', set: HG.seed.SETS[0], startedAt: new Date().toISOString() });
-      assert.eq([r.wrong, r.score], [1, 65]);
-      assert.eq(r.correctFirstTry + r.correctAfterRetry + r.revealed + r.wrong + r.skipped, r.totalQuestions);
-    });
+    it('자동 판정 모듈을 쓰지 않음', () => assert.eq(typeof HG.hw, 'undefined'));
   });
 
   describe('해시', () => {

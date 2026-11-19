@@ -5,7 +5,7 @@
 > 문서 버전: 0.1.0 (설계 단계) · 작성일: 2026-11-19
 
 > **방향 전환 (2026-11-19)**: 사용자 요청으로 4종 활동(따라쓰기·초성·짝짓기·빈칸)을 없애고 **받아쓰기 프로그램**으로 다시 만들었다.
-> 현재 코드: `js/core/tts.js`(읽어 주기), `js/core/handwriting.js`(칸별 정답 판정), `js/activities/dictation.js`, `js/screens/{home,dictate,admin-display,pin}.js`.
+> 현재 코드: `js/core/tts.js`(읽어 주기), `js/activities/dictation.js`(쓴 칸 아래에 같은 모양의 정답 칸으로 비교 — 자동 채점 없음), `js/screens/{home,dictate,admin-display,pin}.js`.
 > 아래 내용 중 4종 활동·수업 계획·학습지·통계·문제 세트 관리·백업 관련 부분은 **이전 설계**이며 갱신이 필요하다. 이전 구현은 커밋 `e346351`에 있다.
 > 개인정보 비수집, 완전 오프라인, 100vh·고시인성 규칙, 존엄성 원칙은 그대로 적용한다. 음성은 브라우저 내장 speechSynthesis만 허용(외부 TTS 금지).
 

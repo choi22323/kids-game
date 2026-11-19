@@ -163,3 +163,9 @@ img.match-pic { max-width: 80%; object-fit: contain; }
   .dict-answer { font-size: max(40px, calc(var(--fs-body) * 1.4)); }
 }
 .trace-box.is-reading { border-color: var(--color-navy); box-shadow: 0 6px 0 #9FB2CC, 0 0 0 6px rgba(30, 58, 95, .3); transform: translateY(-4px); transition: transform .12s, box-shadow .12s; }
+/* 정답 칸: 내가 쓴 칸과 같은 크기·배치로 바로 아래에 */
+.trace-box.is-answer { display: grid; place-items: center; background-color: #FFFDF7; border-color: var(--color-navy); color: var(--color-navy);
+  font-family: var(--font-family); font-weight: 500; line-height: 1; box-shadow: 0 4px 0 #C9D3E0; }
+.trace-box.is-answer.is-space { background: #F7F3EA; border-color: var(--color-line); }
+.dict-answer-label { position: absolute; left: 0; display: flex; align-items: center; justify-content: center; font-size: var(--fs-body); font-weight: 700; color: var(--color-navy); }
+.dict-answer-label { white-space: nowrap; overflow: hidden; }
