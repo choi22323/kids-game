@@ -33,7 +33,7 @@ const S = os.tmpdir() + '/';
   await p.mouse.up();
   await p.screenshot({ path: S + 'd-write.png' });
   await p.getByRole('button', { name: '다 썼어요' }).click(); await p.waitForTimeout(1800);
-  console.log('정답 표시:', await p.locator('.dict-answer').textContent());
+  console.log('정답 칸:', await p.$$eval('.trace-box.is-answer', (e) => e.map((x) => x.textContent || '␣').join('')), '/ 내 칸:', await p.locator('.trace-box:not(.is-answer)').count());
   await p.screenshot({ path: S + 'd-answer.png' });
   for (let i = 0; i < 12 && !(await p.locator('.result').count()); i++) {
     const nx = p.locator('.run-bar [data-role=next]');
