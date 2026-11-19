@@ -63,17 +63,18 @@
     for (let i = 0; i < total && total <= 12; i++) dots.appendChild(h('span', { class: 'dot' + (i < cur ? ' is-done' : i === cur ? ' is-cur' : '') }));
     st.progEl.append(dots, h('span', { class: 'prog-num', text: Math.min(cur + 1, total) + ' / ' + total }));
   }
-  const fullTitle = () => (st.set.group && st.set.group !== st.set.title ? st.set.group + ' · ' + st.set.title : st.set.title);
+  /** 묶음 이름 + 번호(예: 2. 우리말 우리글 · 87번). 제목이 이미 묶음 이름을 담고 있으면 제목만 */
+  const fullTitle = () => (st.set.group && !st.set.title.startsWith(st.set.group) ? st.set.group + ' · ' + st.set.title : st.set.title);
   function intro() {
     clear(st.stage);
-    setTitle('받아쓰기 · ' + fullTitle());
+    setTitle(fullTitle());
     setProgress(0, 0);
     const hasVoice = HG.tts.supported() && HG.tts.voice();
     st.stage.appendChild(h('div', { class: 'intro' },
       h('div', { class: 'intro-icon', 'aria-hidden': 'true', text: '👂' }),
       h('h1', { class: 'intro-name', text: '받아쓰기' }),
       h('p', { class: 'intro-set', text: fullTitle() + ' · ' + st.set.sentences.length + '문장' }),
-      h('p', { class: 'intro-msg', text: hasVoice ? '문장을 읽어 드리면 칸에 받아 써 보세요. 몇 번이든 다시 들을 수 있습니다.' : '한국어 읽어 주기 음성이 없어 강사님이 문장을 읽어 주셔야 합니다.' })));
+      h('p', { class: 'intro-msg', text: hasVoice ? '문장을 읽어 드리면 칸에 받아 써 보세요. 몇 번이든 다시 들을 수 있습니다.' : '한국어 목소리가 없어 강사님이 문장을 읽어 주셔야 합니다.' })));
     const go = ui.btn('시작하기', { variant: 'primary', icon: '▶', cls: 'icon-after', onClick: begin });
     go.dataset.role = 'next';
     setBar([], [], [go]);
@@ -81,10 +82,15 @@
   }
   function begin() {
     clear(st.stage);
-    setTitle('받아쓰기 · ' + fullTitle());
+    setTitle(fullTitle());
     st.startedAt = HG.format.nowISO();
-    const items = st.set.sentences.slice().sort((a, b) => a.order - b.order);
-    st.inst = HG.activities.dictation.start({ stage: st.stage, items, bar: setBar, onProgress: setProgress, onFinish: finish });
+    let items = st.set.sentences.slice().sort((a, b) => a.order - b.order);
+    if (HG.state.settings.shuffleQuestions && items.length > 1) {
+      for (let i = items.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [items[i], items[j]] = [items[j], items[i]]; }
+    }
+    const single = items.length === 1 && st.set.no != null;
+    st.inst = HG.activities.dictation.start({ stage: st.stage, items, bar: setBar, onProgress: setProgress, onFinish: finish,
+      itemLabel: (i) => (single ? st.set.title + ' 문제' : (i + 1) + '번 문장') });
   }
   async function save(results, completed) {
     if (!results.length) return null;
@@ -102,9 +108,8 @@
     const stars = rec ? rec.stars : 0;
     const row = h('div', { class: 'result-stars', role: 'img', 'aria-label': '별 ' + stars + '개' });
     for (let k = 0; k < 3; k++) row.appendChild(h('span', { class: 'rstar' + (k < stars ? ' is-on' : ''), style: { '--k': String(k) }, 'aria-hidden': 'true', text: '★' }));
-    const right = results.filter((r) => r.result === 'first' || r.result === 'retry').length;
     const single = results.length === 1;
-    const msg = single ? (right ? '정확하게 쓰셨어요!' : done ? '끝까지 써 주셔서 고맙습니다!' : '다음에 함께 해 봐요.')
+    const msg = single ? (done ? '수고하셨습니다! 잘 쓰셨어요.' : '다음에 함께 해 봐요.')
       : done === results.length ? '모든 문장을 받아 쓰셨어요!' : done ? '끝까지 함께해 주셔서 고맙습니다!' : '다음에 함께 해 봐요.';
     const line = single ? fullTitle() + ' 받아쓰기를 마쳤습니다.' : results.length + '문장 중 ' + done + '문장을 받아 쓰셨어요.';
     st.stage.appendChild(h('div', { class: 'result' }, row, h('h1', { class: 'result-msg', text: msg }), h('p', { class: 'result-line', text: line })));

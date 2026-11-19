@@ -32,7 +32,7 @@
   }
   async function boot() {
     const view = document.getElementById('view');
-    view.appendChild(h('section', { class: 'boot' }, h('h1', { text: '수업 자료를 준비하고 있습니다' }), h('div', { class: 'boot-bar' }, h('span'))));
+    view.appendChild(h('section', { class: 'boot' }, h('h1', { text: '받아쓰기를 준비하고 있습니다' }), h('div', { class: 'boot-bar' }, h('span'))));
     try {
       await HG.db.open();
     } catch (e) {
@@ -49,7 +49,7 @@
       await HG.repo.setMeta('schemaVersion', HG.db.SCHEMA_VERSION);
     } catch (e) {
       console.error(e);
-      fatal('브라우저를 닫았다가 다시 열어 주세요. 계속되면 백업 파일로 복원해 주세요.');
+      fatal('브라우저를 닫았다가 다시 열어 주세요. 계속되면 Chrome 또는 Edge 최신 버전으로 열어 주세요.');
       return;
     }
     if (navigator.storage && navigator.storage.persist) navigator.storage.persist().then((ok) => { HG.state.persisted = ok; }).catch(() => {});

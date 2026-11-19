@@ -62,6 +62,8 @@
     ctx.stage.appendChild(root);
     let s = null; // 현재 문제 상태
 
+    /** 화면에 보일 문장 번호: 한 문제짜리 묶음은 문제 번호(예: 87번), 여러 문장 묶음은 1번 문장, 2번 문장… */
+    const label = () => (ctx.itemLabel ? ctx.itemLabel(idx) : (idx + 1) + '번 문장');
     function render() {
       clear(root);
       HG.tts.stop();
@@ -75,13 +77,13 @@
       s.status = h('span', { class: 'dict-status', 'aria-live': 'polite' });
       const info = h('p', { class: 'dict-info' }, s.count, s.status);
       const top = h('div', { class: 'dict-top' },
-        h('p', { class: 'act-ask', text: (idx + 1) + '번 문장 — 잘 듣고 받아 써 보세요' }),
+        h('p', { class: 'act-ask', text: label() + ' — 잘 듣고 받아 써 보세요' }),
         h('div', { class: 'btn-row center' }, listenBtn, slowBtn),
         info);
       if (!HG.tts.supported() || !HG.tts.voice()) {
         top.appendChild(h('div', { class: 'notice dict-novoice' },
-          h('span', { class: 'dict-novoice-text', text: '한국어 음성이 없어요. 강사님이 읽어 주세요.' }),
-          ui.btn('강사용 문장 보기', { onClick: () => HG.dialog.alert('강사용 — ' + (idx + 1) + '번 문장', item.text) })));
+          h('span', { class: 'dict-novoice-text', text: '한국어 목소리가 없어요. 강사님이 읽어 주세요.' }),
+          ui.btn('강사용 문장 보기', { onClick: () => HG.dialog.alert('강사용 — ' + label(), item.text) })));
       }
       s.area = h('div', { class: 'dict-area' });
       s.answer = h('div', { class: 'sr-only', 'aria-live': 'polite' });
@@ -110,16 +112,22 @@
       const aw = s.area.clientWidth, ah = s.area.clientHeight;
       const small = aw < 700 || ah < 420;
       const gap = small ? 6 : 10;
-      // 정답 칸을 아래에 둘 자리가 모자라면(휴대폰 가로 등) 내 칸 안에 정답을 흐리게 겹쳐 보여 준다
+      // 정답 칸 배치: 아래(기본) / 옆(가로로 넓고 높이가 낮을 때) / 겹치기(둘 다 너무 작을 때만, 글씨 위에 표시)
+      const SEP = small ? 28 : 48;
+      const lab = small ? 32 : 44;
       let mode = 'below';
-      let f = fit(cs.length, aw, ah, { copies: s.revealed ? 2 : 1, gap, rgap: s.revealed ? 8 : (small ? 12 : 24), labelH: s.revealed ? (small ? 32 : 44) : 0 });
-      if (s.revealed && f.size < 48) {
-        const o = fit(cs.length, aw, ah, { copies: 1, gap, rgap: small ? 12 : 24, labelH: small ? 32 : 44 });
-        if (o.size > f.size * 1.3) { mode = 'overlay'; f = o; }
+      let f = fit(cs.length, aw, ah, { copies: s.revealed ? 2 : 1, gap, rgap: s.revealed ? 8 : (small ? 12 : 24), labelH: s.revealed ? lab : 0 });
+      if (s.revealed) {
+        const side = fit(cs.length, (aw - SEP) / 2, ah, { copies: 1, gap, rgap: small ? 12 : 24, labelH: lab });
+        if (side.size > f.size) { mode = 'side'; f = side; }
+        if (f.size < 28) {
+          const o = fit(cs.length, aw, ah, { copies: 1, gap, rgap: small ? 12 : 24, labelH: lab });
+          if (o.size > f.size * 1.3) { mode = 'overlay'; f = o; }
+        }
       }
       const rows = f.rows, perRow = f.perRow;
       const rgap = s.revealed && mode === 'below' ? 8 : (small ? 12 : 24);
-      const labelH = s.revealed ? (small ? 32 : 44) : 0;
+      const labelH = s.revealed ? lab : 0;
       const size = Math.max(28, f.size);
       const W = perRow * size + (perRow - 1) * gap;
       const H = rows.length * size + (rows.length - 1) * rgap; // 내가 쓰는 칸 영역
@@ -127,23 +135,30 @@
         const k = size / s.layout.size;
         s.strokes.forEach((st) => st.pts.forEach((p) => { p.x *= k; p.y *= k; }));
       }
-      const place = (top) => { const out = []; let ci = 0; rows.forEach((n, r) => { for (let i = 0; i < n; i++) { out.push({ x: i * (size + gap), y: top + r * (size + rgap), size, ch: cs[ci] }); ci++; } }); return out; };
+      const place = (top, left) => { const out = []; let ci = 0; rows.forEach((n, r) => { for (let i = 0; i < n; i++) { out.push({ x: (left || 0) + i * (size + gap), y: top + r * (size + rgap), size, ch: cs[ci] }); ci++; } }); return out; };
       const boxes = place(0);
       s.layout = { W, H, size, boxes, mode };
       clear(s.area);
       const totalH = !s.revealed ? H : mode === 'below' ? H * 2 + labelH : H + labelH;
-      const row = h('div', { class: 'dict-row', style: { width: W + 'px', height: totalH + 'px' } });
+      const totalW = s.revealed && mode === 'side' ? W * 2 + SEP : W;
+      const row = h('div', { class: 'dict-row', style: { width: totalW + 'px', height: totalH + 'px' } });
       s.boxEls = boxes.map((b) => {
         const el = h('div', { class: 'trace-box is-cross' + (b.ch === ' ' ? ' is-space' : ''), style: { left: b.x + 'px', top: b.y + 'px', width: b.size + 'px', height: b.size + 'px' } });
         row.appendChild(el);
         return el;
       });
+      const answerBox = (b) => h('div', { class: 'trace-box is-cross is-answer' + (b.ch === ' ' ? ' is-space' : ''), 'aria-hidden': 'true',
+        style: { left: b.x + 'px', top: b.y + 'px', width: b.size + 'px', height: b.size + 'px', 'font-size': Math.round(b.size * 0.72) + 'px' } }, b.ch === ' ' ? '' : b.ch);
       if (s.revealed && mode === 'overlay') {
         row.appendChild(h('div', { class: 'dict-answer-label', style: { top: H + 'px', height: labelH + 'px', width: W + 'px' }, text: '정답: ' + s.item.text }));
+      } else if (s.revealed && mode === 'side') {
+        row.appendChild(h('div', { class: 'dict-answer-label', style: { top: H + 'px', height: labelH + 'px', left: '0px', width: W + 'px' }, text: '내가 쓴 글씨' }));
+        row.appendChild(h('div', { class: 'dict-answer-label is-strong', style: { top: H + 'px', height: labelH + 'px', left: (W + SEP) + 'px', width: W + 'px' }, text: '정답' }));
+        row.appendChild(h('div', { class: 'dict-side-arrow', 'aria-hidden': 'true', style: { left: W + 'px', width: SEP + 'px', height: H + 'px' }, text: '▶' }));
+        place(0, W + SEP).forEach((b) => row.appendChild(answerBox(b)));
       } else if (s.revealed) {
-        row.appendChild(h('div', { class: 'dict-answer-label', style: { top: H + 'px', height: labelH + 'px', width: W + 'px' }, text: '▼ 정답과 비교해 보세요' }));
-        place(H + labelH).forEach((b) => row.appendChild(h('div', { class: 'trace-box is-cross is-answer' + (b.ch === ' ' ? ' is-space' : ''), 'aria-hidden': 'true',
-          style: { left: b.x + 'px', top: b.y + 'px', width: b.size + 'px', height: b.size + 'px', 'font-size': Math.round(b.size * 0.72) + 'px' } }, b.ch === ' ' ? '' : b.ch)));
+        row.appendChild(h('div', { class: 'dict-answer-label', style: { top: H + 'px', height: labelH + 'px', width: W + 'px' }, text: W < 230 ? '▼ 정답' : '▼ 정답과 비교해 보세요' }));
+        place(H + labelH).forEach((b) => row.appendChild(answerBox(b)));
       }
       const dpr = window.devicePixelRatio || 1;
       s.guide = h('canvas', { class: 'trace-guide', 'aria-hidden': 'true' });
@@ -157,8 +172,21 @@
       s.ictx.setTransform(dpr, 0, 0, dpr, 0, 0);
       s.ictx.lineCap = 'round'; s.ictx.lineJoin = 'round'; s.ictx.strokeStyle = inkColor; s.ictx.fillStyle = inkColor;
       s.strokes.forEach((st) => { for (let i = 0; i < st.pts.length; i++) segment(s.ictx, st, i); if (st.ended) tail(s.ictx, st); });
-      if (s.revealed && mode === 'overlay') drawGuide(answerColor, 0.55);
-      else if (opt().dictGuide === 'always') drawGuide();
+      if (s.revealed && mode === 'overlay') {
+        const top = h('canvas', { class: 'trace-guide dict-over', 'aria-hidden': 'true' });
+        top.width = Math.round(W * dpr); top.height = Math.round(H * dpr);
+        top.style.setProperty('width', W + 'px'); top.style.setProperty('height', H + 'px');
+        row.appendChild(top);
+        const t = top.getContext('2d'); t.setTransform(dpr, 0, 0, dpr, 0, 0);
+        t.textAlign = 'center'; t.textBaseline = 'middle'; t.lineJoin = 'round';
+        boxes.forEach((b) => {
+          if (b.ch === ' ') return;
+          t.font = '700 ' + Math.round(b.size * 0.6) + 'px ' + FONT;
+          t.lineWidth = Math.max(3, b.size * 0.08); t.strokeStyle = '#FFFFFF';
+          t.strokeText(b.ch, b.x + b.size / 2, b.y + b.size * 0.53);
+          t.fillStyle = answerColor; t.fillText(b.ch, b.x + b.size / 2, b.y + b.size * 0.53);
+        });
+      } else if (opt().dictGuide === 'always') drawGuide();
       bindInk();
     }
     /** (선택) 쓸 때부터 칸 안에 흐린 글씨 */
@@ -220,7 +248,7 @@
       layout();
       s.answer.textContent = '정답: ' + s.item.text;
       results[idx] = { itemId: s.item.id, text: s.item.text, attempts: s.attempts, result: s.attempts > 1 ? 'retry' : 'first', listens: s.listens };
-      HG.feedback.show('correct', HG.feedback.praise() + ' 아래 정답과 비교해 보세요.', 1600);
+      HG.feedback.show('correct', HG.feedback.praise() + ' 정답과 비교해 보세요.', 1600);
       bar();
     }
     function skip() {

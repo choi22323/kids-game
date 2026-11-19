@@ -3,7 +3,7 @@
   'use strict';
   const db = HG.db;
 
-  const PRAISE = ['참 잘하셨어요!', '훌륭해요!', '정답이에요, 박수!', '멋지게 해내셨어요!'];
+  const PRAISE = ['참 잘하셨어요!', '훌륭해요!', '수고하셨어요!', '멋지게 해내셨어요!'];
   const RETRY = ['괜찮아요, 한 번 더 해 볼까요?', '거의 다 왔어요!'];
   const isStrList = (v) => Array.isArray(v) && v.length >= 1 && v.length <= 10 && v.every((s) => typeof s === 'string' && s.trim().length >= 1 && s.length <= 20);
   const SETTINGS = {

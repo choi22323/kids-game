@@ -20,21 +20,26 @@
         if (g.sets.length === 1) {
           const s = g.sets[0];
           return h('div', { class: 'card row-card' },
-            h('div', { class: 'row-info' }, h('p', { class: 'strong', text: g.name }), h('p', { class: 'muted', text: s.sentences.length + '문장 · 예: ' + s.sentences.slice(0, 2).map((x) => x.text).join(' / ') + ' …' })),
+            h('div', { class: 'row-info home-info' }, h('p', { class: 'strong', text: g.name }), h('p', { class: 'muted', text: s.sentences.length + '문장 · ' + s.sentences.slice(0, 2).map((x) => x.text).join(', ') + ' …' })),
             h('div', { class: 'btn-row' }, ui.btn('시작하기', { variant: 'primary', icon: '▶', cls: 'icon-after', onClick: () => open(s) })));
         }
         // 번호별로 한 문제씩: 번호 버튼
         return h('div', { class: 'card group-card' },
-          h('p', null, h('span', { class: 'strong', text: g.name }), h('span', { class: 'muted', text: '  ·  번호를 누르면 그 문제 하나를 받아 씁니다 (' + g.sets[0].title + '~' + g.sets[g.sets.length - 1].title + ')' })),
+          h('p', { class: 'strong', text: g.name }),
+          h('p', { class: 'muted group-desc', text: '번호를 누르면 그 문제 하나를 받아 씁니다 (' + g.sets[0].title + '~' + g.sets[g.sets.length - 1].title + ')' }),
           h('div', { class: 'no-grid', role: 'group', 'aria-label': g.name + ' 문제 번호' },
-            g.sets.map((s) => ui.btn(s.title, { variant: 'secondary', cls: 'no-btn', ariaLabel: g.name + ' ' + s.title + ' 받아쓰기 시작', onClick: () => open(s) }))));
+            g.sets.map((s) => {
+              const b = ui.btn(s.title, { variant: 'secondary', cls: 'no-btn', ariaLabel: g.name + ' ' + s.title + ' 받아쓰기 시작', onClick: () => open(s) });
+              if (s.no != null && /번$/.test(s.title)) { clear(b); b.append(h('span', { text: String(s.no) }), h('span', { class: 'no-suffix', text: '번' })); }
+              return b;
+            })));
       } }).draw();
     function drawVoice() {
       clear(voiceCard);
-      voiceCard.appendChild(h('h2', { text: '🔊 읽어 주기 음성' }));
+      voiceCard.appendChild(h('h2', { text: '🔊 읽어 주는 목소리' }));
       const v = HG.tts.supported() && HG.tts.voice();
-      if (v) voiceCard.appendChild(h('p', { text: '사용할 음성: ' + HG.tts.voiceLabel() }));
-      else voiceCard.appendChild(h('p', { class: 'notice', text: HG.tts.supported() ? '한국어 음성을 찾지 못했습니다. 컴퓨터 설정에서 한국어 음성을 설치하거나, 강사님이 직접 읽어 주세요.' : '이 브라우저는 읽어 주기를 지원하지 않습니다. Chrome 또는 Edge를 사용해 주세요.' }));
+      if (v) voiceCard.appendChild(h('p', { text: '사용할 목소리: ' + HG.tts.voiceLabel() }));
+      else voiceCard.appendChild(h('p', { class: 'notice', text: HG.tts.supported() ? '한국어 목소리를 찾지 못했습니다. 컴퓨터에 한국어 목소리(음성)를 설치하거나, 강사님이 직접 읽어 주세요.' : '이 브라우저는 읽어 주기를 지원하지 않습니다. Chrome 또는 Edge를 사용해 주세요.' }));
       voiceCard.appendChild(h('div', { class: 'btn-row' }, ui.btn('소리 시험', { icon: '♪', disabled: !HG.tts.supported(), onClick: () => HG.tts.speak('안녕하세요. 받아쓰기를 시작하겠습니다.') })));
     }
     drawVoice();

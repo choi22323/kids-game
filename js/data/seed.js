@@ -2,7 +2,7 @@
    애국가 가사는 국가 상징 자료로 널리 공개되어 있으나, 교육 자료 사용 범위는 기관에서 확인 필요. */
 (function () {
   'use strict';
-  const SEED_VERSION = 4;
+  const SEED_VERSION = 5;
   const T0 = '2026-11-19T00:00:00.000Z';
   const ANTHEM_1 = ['동해 물과', '백두산이', '마르고 닳도록', '하느님이 보우하사', '우리나라 만세',
     '무궁화 삼천리', '화려 강산', '대한 사람', '대한으로', '길이 보전하세'];
@@ -18,7 +18,7 @@
     sentences: [{ id: 's' + (86 + i), text, order: 0 }],
     createdAt: T0, updatedAt: T0
   })).concat([{
-    id: 'seed-anthem-1', kind: 'dictation', title: '애국가 1절 (시험용)', description: '애국가 1절을 10문장으로 나누었습니다.',
+    id: 'seed-anthem-1', kind: 'dictation', title: '애국가 1절', description: '시험용 — 애국가 1절을 10문장으로 나누었습니다.',
     isBuiltIn: true, isHidden: false,
     sentences: ANTHEM_1.map((text, i) => ({ id: 's' + (i + 1), text, order: i })),
     group: '애국가 1절', groupOrder: 0, no: 1,

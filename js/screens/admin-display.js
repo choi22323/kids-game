@@ -3,7 +3,6 @@
   'use strict';
   const { h } = HG.dom;
   const ui = HG.ui;
-  const V = { clean: (x) => String(x || '').trim() };
   let tab = 'screen';
 
   async function mount(view) {
@@ -38,24 +37,13 @@
         row('목소리', h('div', { class: 'btn-row' },
           ui.select([{ value: '', label: '자동 (가장 친근한 목소리)' }].concat(HG.tts.koreanVoices().map((v) => ({ value: v.name, label: v.name + (v.localService ? ' · 이 컴퓨터' : ' · 인터넷 필요') }))), s.ttsVoice, (v) => set('ttsVoice', v), '목소리'),
           ui.btn('들어 보기', { icon: '🔊', onClick: () => HG.tts.speak('안녕하세요. 오늘도 같이 받아쓰기 해 볼까요?') })),
-          HG.tts.koreanVoices().length ? '이 컴퓨터에서 쓸 수 있는 한국어 목소리 ' + HG.tts.koreanVoices().length + '개 · 지금: ' + (HG.tts.voiceLabel() || '없음') : '한국어 목소리를 찾지 못했습니다. 컴퓨터에 한국어 음성을 설치해 주세요.'),
+          HG.tts.koreanVoices().length ? '이 컴퓨터에서 쓸 수 있는 한국어 목소리 ' + HG.tts.koreanVoices().length + '개 · 지금: ' + (HG.tts.voiceLabel() || '없음') : '한국어 목소리를 찾지 못했습니다. 컴퓨터에 한국어 목소리(음성)를 설치해 주세요.'),
         row('목소리 높낮이', ui.stepper({ label: '목소리 높낮이', value: s.ttsPitch, min: 0.8, max: 1.4, step: 0.05, format: (v) => (v < 0.95 ? '낮고 차분하게' : v <= 1.05 ? '보통' : v <= 1.2 ? '조금 밝게' : '밝게') + ' (' + Math.round(v * 100) + '%)', onChange: (v) => set('ttsPitch', v) })),
         row('읽기 속도', ui.stepper({ label: '읽기 속도', value: s.ttsRate, min: 0.5, max: 1.2, step: 0.05, format: (v) => (v <= 0.7 ? '아주 천천히' : v <= 0.85 ? '천천히' : v <= 1 ? '보통' : '조금 빠르게') + ' (' + Math.round(v * 100) + '%)', onChange: (v) => set('ttsRate', v) })),
         row('효과음', h('div', { class: 'btn-row' }, ui.toggle('효과음 켜기', s.soundEnabled, (v) => set('soundEnabled', v)),
           ui.btn('들어 보기', { icon: '♪', onClick: () => { if (!HG.audio.play('correct')) HG.toast.show('소리가 꺼져 있거나 이 브라우저에서 소리를 낼 수 없습니다.'); } }))),
         row('음량', ui.stepper({ label: '음량', value: Math.round(s.volume * 10), min: 0, max: 10, step: 1, format: (v) => v * 10 + '%', onChange: (v) => set('volume', v / 10) })),
         row('애니메이션', ui.segmented([{ value: 'auto', label: '컴퓨터 설정 따름' }, { value: 'on', label: '줄이기' }, { value: 'off', label: '모두 보이기' }], s.reduceMotion, (v) => set('reduceMotion', v), '애니메이션'))], 5);
-    } else if (tab === 'print') {
-      const inst = ui.input({ value: s.institutionName, max: 30 });
-      const prog = ui.input({ value: s.programName, max: 30 });
-      const saveText = async (k, el) => { const v = V.clean(el.value); if (HG.repo.validSetting(k, v)) { await set(k, v); HG.toast.show('저장했습니다.'); } else HG.toast.show('1~30자로 입력해 주세요.'); };
-      inst.addEventListener('change', () => saveText('institutionName', inst));
-      prog.addEventListener('change', () => saveText('programName', prog));
-      ui.pagedNodes(panel, [
-        row('학습지 기관명', inst), row('학습지 프로그램명', prog),
-        row('백업 알림', ui.stepper({ label: '백업 알림 주기', value: s.backupReminderDays, min: 0, max: 30, step: 1, format: (v) => (v ? v + '일마다' : '끔'), onChange: (v) => set('backupReminderDays', v) })),
-        row('기록 보존 안내', ui.stepper({ label: '기록 보존 안내 기간', value: s.recordRetentionMonths, min: 0, max: 60, step: 1, format: (v) => (v ? v + '개월' : '끔'), onChange: (v) => set('recordRetentionMonths', v) }),
-          '기간이 지난 기록은 자동으로 지우지 않고 안내만 합니다. 보존 기간은 기관 규정 확인이 필요합니다.')], 5);
     } else {
       const on = HG.pin.isSet();
       ui.pagedNodes(panel, [
@@ -63,7 +51,7 @@
           ui.btn(on ? 'PIN 바꾸기' : 'PIN 설정', { variant: 'primary', disabled: !HG.pin.available(), onClick: async () => { if (on && !(await HG.pin.ask('지금 PIN을 입력해 주세요.'))) return; if (await HG.pin.setNew()) { HG.toast.show('PIN을 설정했습니다.'); HG.router.rerender(); } } }),
           on ? ui.btn('PIN 해제', { onClick: async () => { if (await HG.pin.ask('지금 PIN을 입력해 주세요.')) { await HG.pin.clear(); HG.toast.show('PIN을 해제했습니다.'); HG.router.rerender(); } } }) : null),
         on ? '지금 PIN이 설정되어 있습니다.' : 'PIN이 설정되어 있지 않습니다.'),
-        h('p', { class: 'notice', text: '⚠ 이 PIN은 어르신이 실수로 관리 화면에 들어가거나 수업 모드를 나가지 않게 하는 장치입니다. 보안 장치가 아니며, 브라우저를 다룰 줄 아는 사람은 해제할 수 있습니다. PIN은 백업 파일에 들어가지 않습니다.' }),
+        h('p', { class: 'notice', text: '⚠ 이 PIN은 어르신이 실수로 관리 화면에 들어가거나 수업 모드를 나가지 않게 하는 장치입니다. 보안 장치가 아니며, 브라우저를 다룰 줄 아는 사람은 해제할 수 있습니다.' }),
         HG.pin.available() ? null : h('p', { class: 'muted', text: '이 브라우저 환경에서는 PIN 기능을 사용할 수 없습니다.' })], 5);
     }
   }

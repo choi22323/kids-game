@@ -145,3 +145,18 @@ button, a { -webkit-touch-callout: none; }
 }
 @media (max-height: 500px) { .group-card { gap: 6px; } .group-card .muted, .row-card .muted { font-size: 14px; } .group-card > p .muted { display: none; } }
 @media (max-height: 500px) { .no-grid { gap: 6px; } .no-btn { font-size: 15px; padding: 0; letter-spacing: -0.03em; white-space: nowrap; } }
+/* 글자 점검(text-audit) 보정 */
+.home-info p { white-space: normal; overflow: visible; text-overflow: clip; }
+.group-desc { font-size: var(--fs-caption); }
+@media (max-height: 500px) {
+  .group-card .muted, .row-card .muted { font-size: 15px; }
+  .group-desc { display: none; }
+  .set-ctrl .btn-row { flex-wrap: nowrap; }
+  .set-ctrl .btn-row select.input { flex: 1 1 0; min-width: 0; }
+  .set-ctrl .btn-row .btn { flex: none; }
+  .intro { gap: 6px; }
+  .intro-icon { display: none; }
+  .intro-msg { font-size: 16px; max-width: 90vw; }
+}
+@media (max-height: 500px) { .no-suffix { display: none; } }
+@media (max-height: 800px) { .group-desc { display: none; } }

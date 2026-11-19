@@ -102,7 +102,7 @@
   HG.tts = {
     supported, speak, speakSyllables, stop, pick, koreanVoices,
     voice: () => voice,
-    voiceLabel: () => (voice ? voice.name + (voice.localService ? ' (이 컴퓨터)' : ' (인터넷 필요할 수 있음)') : ''),
+    voiceLabel: () => (voice ? voice.name + (voice.localService ? ' (이 컴퓨터)' : ' (인터넷 필요)') : ''),
     onVoice(f) { listeners.push(f); return () => { listeners = listeners.filter((x) => x !== f); }; }
   };
 })();
