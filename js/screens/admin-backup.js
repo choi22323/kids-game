@@ -19,8 +19,7 @@
     ui.pagedNodes(scr.body, [
       h('div', { class: 'card' }, h('h2', { text: '💾 백업 파일 저장' }),
         h('p', { text: lastBackup ? '마지막 백업: ' + F.dateTimeLabel(lastBackup) : '아직 백업한 적이 없습니다.' }),
-        h('div', { class: 'btn-row' }, ui.toggle('활동 기록 포함', true, (v) => { opts.includeRecords = v; }), ui.toggle('그림 포함', true, (v) => { opts.includeImages = v; })),
-        h('div', { class: 'btn-row' }, ui.btn('백업 파일 저장', { variant: 'primary', onClick: doBackup })),
+        h('div', { class: 'btn-row' }, ui.toggle('활동 기록 포함', true, (v) => { opts.includeRecords = v; }), ui.toggle('그림 포함', true, (v) => { opts.includeImages = v; }), ui.btn('백업 파일 저장', { variant: 'primary', onClick: doBackup })),
         h('p', { class: 'notice small', text: '⚠ 백업 파일은 암호화되지 않습니다. 기관 USB나 기관 공유 폴더에 보관하세요.' })),
       h('div', { class: 'card' }, h('h2', { text: '♻ 백업에서 복원' }),
         h('p', { text: lastRestore ? '마지막 복원: ' + F.dateTimeLabel(lastRestore) : '백업 파일로 자료를 되살립니다.' }),

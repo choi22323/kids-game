@@ -67,19 +67,22 @@
       if (!set) { actBox.appendChild(h('p', { text: '세트를 골라 주세요.' })); return; }
       const av = HG.validate.availability(set);
       if (!st.acts) st.acts = L.activities.filter((a) => av[a]);
-      actBox.appendChild(h('h2', { text: '할 활동' }));
-      const g = h('div', { class: 'act-toggles' });
-      L.activities.forEach((a) => {
-        const on = st.acts.includes(a);
-        const b = ui.toggle(L.activityIcon[a] + ' ' + L.activityShort[a], on, (v) => {
-          st.acts = v ? L.activities.filter((x) => x === a || st.acts.includes(x)) : st.acts.filter((x) => x !== a);
-          go.disabled = !st.acts.length;
-        });
-        if (!av[a]) { b.disabled = true; b.title = av.reason[a]; b.setAttribute('aria-label', L.activityShort[a] + ': ' + av.reason[a]); }
-        g.appendChild(b);
-      });
+      // 하나만 고르는 방식: 누른 활동만 진행한다 (여러 개를 켜고 끄는 방식은 오조작이 잦았음)
+      const all = L.activities.filter((a) => av[a]);
+      const cur = st.acts.length === 1 ? st.acts[0] : 'all';
+      actBox.appendChild(h('h2', { text: '할 활동을 하나 골라 주세요' }));
+      const opts = L.activities.map((a) => ({ value: a, label: L.activityIcon[a] + ' ' + L.activityShort[a], disabled: !av[a] }))
+        .concat([{ value: 'all', label: '★ ' + all.length + '가지 모두 차례로', disabled: !all.length }]);
+      const g = ui.segmented(opts, cur, (v) => {
+        st.acts = v === 'all' ? all.slice() : [v];
+        go.disabled = !st.acts.length;
+      }, '할 활동');
+      g.classList.add('act-toggles');
       const go = ui.btn('시작하기', { variant: 'primary', icon: '▶', cls: 'icon-after', disabled: !st.acts.length, onClick: start });
-      actBox.append(g, h('div', { class: 'btn-row end' }, go));
+      const unavailable = L.activities.filter((a) => !av[a]).map((a) => L.activityShort[a] + ': ' + av.reason[a]);
+      actBox.appendChild(g);
+      if (unavailable.length) actBox.appendChild(h('p', { class: 'muted small', text: unavailable.join(' / ') }));
+      actBox.appendChild(h('div', { class: 'btn-row end' }, go));
     }
     drawActs();
   }

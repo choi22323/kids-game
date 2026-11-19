@@ -47,7 +47,7 @@
       todayCard.appendChild(h('div', { class: 'btn-row' }, ui.btn('수업 계획 만들기', { icon: '📅', onClick: () => HG.router.go('/plans/new') }), ui.btn('빠른 시작', { icon: '▶', onClick: () => HG.router.go('/quick') })));
     }
 
-    const quickCard = h('div', { class: 'card home-card' }, h('h2', { text: '빠른 시작' }), h('p', { class: 'muted', text: '주제를 고르면 바로 시작할 수 있습니다.' }));
+    const quickCard = h('div', { class: 'card home-card' }, h('h2', { text: '빠른 시작 — 주제를 골라 주세요' }));
     const tg = h('div', { class: 'topic-grid' });
     topics.slice(0, 6).forEach((t) => {
       const n = sets.filter((x) => x.topicId === t.id && !x.isHidden).length;

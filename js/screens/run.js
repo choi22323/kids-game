@@ -90,7 +90,7 @@
   function setBar(left, center, right) {
     [[st.barL, left], [st.barC, center], [st.barR, right]].forEach(([el, list]) => { clear(el); (list || []).forEach((b) => el.appendChild(b)); });
   }
-  function setTitle(main, sub) { clear(st.titleEl); st.titleEl.append(h('strong', { text: main }), sub ? h('span', { class: 'run-sub', text: ' · ' + sub }) : null); }
+  function setTitle(main, sub) { clear(st.titleEl); HG.dom.add(st.titleEl, h('strong', { text: main }), sub ? h('span', { class: 'run-sub', text: ' · ' + sub }) : null); }
   function setProgress(cur, total, label) {
     clear(st.progEl);
     if (!total) return;

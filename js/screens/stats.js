@@ -81,7 +81,7 @@
       if (!r.activities && !r.lessons) { out.appendChild(ui.emptyState('선택한 기간에 기록이 없습니다.')); return; }
       const kpi = (l, v) => h('div', { class: 'card kpi' }, h('span', { class: 'kpi-label', text: l }), h('span', { class: 'kpi-value', text: v }));
       const max = Math.max(1, ...Object.values(r.byAct));
-      out.append(
+      HG.dom.add(out,
         rg.capped ? h('p', { class: 'notice small', text: '기간은 최대 1년까지 볼 수 있어 1년으로 줄였습니다.' }) : null,
         h('div', { class: 'kpis' }, kpi('마친 수업', r.lessons + '회'), kpi('활동 진행', r.activities + '회'), kpi('평균 정답률', r.accuracy == null ? '—' : F.percent(r.accuracy)),
           kpi('모은 별', '★ ' + r.stars), kpi('따라쓰기 평균', r.traceCoverage == null ? '—' : F.percent(r.traceCoverage))),

@@ -229,3 +229,19 @@
 
   HG.ui = { btn, header, screen, emptyState, pagedList, pagedNodes, pager, field, input, select, segmented, toggle, stepper, longPress, showErrors, errorSummary, badge };
 })();
+/* 터치 화면에서도 '눌림'이 확실히 보이도록: 누르는 동안 is-pressed + 짧은 클릭음 (설정에서 소리 끄면 무음) */
+(function () {
+  'use strict';
+  const SEL = '.btn, .option, .match-card, .set-pick, .pick-item';
+  let pressed = null;
+  const release = () => { if (pressed) { pressed.classList.remove('is-pressed'); pressed = null; } };
+  document.addEventListener('pointerdown', (e) => {
+    const el = e.target.closest && e.target.closest(SEL);
+    if (!el || el.disabled) return;
+    release();
+    pressed = el;
+    el.classList.add('is-pressed');
+    if (e.pointerType !== 'mouse' && navigator.vibrate) { try { navigator.vibrate(10); } catch (err) { /* 무시 */ } }
+  }, { passive: true });
+  ['pointerup', 'pointercancel', 'blur'].forEach((ev) => window.addEventListener(ev, release, { passive: true }));
+})();

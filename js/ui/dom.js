@@ -38,5 +38,7 @@
   }
   function clear(el) { while (el.firstChild) el.removeChild(el.firstChild); return el; }
   function $(sel, root) { return (root || document).querySelector(sel); }
-  HG.dom = { h, svg, clear, $, append };
+  /** null/false를 건너뛰는 append */
+  function add(el, ...kids) { append(el, kids); return el; }
+  HG.dom = { h, svg, clear, $, append, add };
 })();
