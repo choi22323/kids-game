@@ -166,6 +166,7 @@
     showResult(c.i, rec);
   }
   function showResult(i, rec) {
+    HG.feedback.hide();
     clear(st.stage);
     setProgress(0, 0);
     const stars = rec ? rec.stars : 0;

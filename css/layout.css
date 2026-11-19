@@ -22,7 +22,7 @@
 .lead { font-size: calc(var(--fs-body) * 1.1); }
 
 /* 수업 모드 */
-body.run-mode .app-shell { grid-template-rows: 0 minmax(0, 1fr); }
+body.run-mode .app-shell { grid-template-rows: minmax(0, 1fr); }
 body.run-mode .topbar { display: none; }
 .run { display: grid; grid-template-rows: var(--bar-h) minmax(0, 1fr) auto; height: 100%; }
 .run-top { display: flex; align-items: center; gap: var(--space-3); padding: 0 var(--edge-safe); background: var(--color-navy); color: #fff; min-width: 0; }
@@ -34,7 +34,7 @@ body.run-mode .topbar { display: none; }
 .dot.is-done { background: var(--color-gold); border-color: var(--color-gold); opacity: 1; }
 .dot.is-cur { background: #fff; opacity: 1; }
 .run-controls { display: flex; gap: 12px; }
-.run-controls .btn { min-height: 72px; font-size: var(--fs-body); padding: 0 20px; }
+.run-controls .btn { min-height: 80px; font-size: var(--fs-body); padding: 0 20px; }
 .run-stage { position: relative; min-height: 0; overflow: hidden; padding: var(--space-3) var(--edge-safe); display: flex; flex-direction: column; }
 .run-bar { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--touch-gap); padding: var(--space-2) var(--edge-safe) var(--space-3); border-top: 2px solid var(--color-line); background: var(--color-surface); }
 .run-bar-l, .run-bar-c, .run-bar-r { display: flex; gap: var(--touch-gap); }

@@ -44,7 +44,7 @@
       });
     } else {
       todayCard.appendChild(h('p', { class: 'muted', text: '오늘 예정된 수업이 없습니다.' }));
-      todayCard.appendChild(h('div', { class: 'btn-row' }, ui.btn('수업 계획 만들기', { icon: '📅', onClick: () => HG.router.go('/plans/new') })));
+      todayCard.appendChild(h('div', { class: 'btn-row' }, ui.btn('수업 계획 만들기', { icon: '📅', onClick: () => HG.router.go('/plans/new') }), ui.btn('빠른 시작', { icon: '▶', onClick: () => HG.router.go('/quick') })));
     }
 
     const quickCard = h('div', { class: 'card home-card' }, h('h2', { text: '빠른 시작' }), h('p', { class: 'muted', text: '주제를 고르면 바로 시작할 수 있습니다.' }));
@@ -70,8 +70,10 @@
       navigator.storage.estimate().then((e) => { if (e && e.usage != null) usage.textContent = '저장 공간 사용: ' + (e.usage / 1048576).toFixed(1) + 'MB'; }).catch(() => {});
     }
 
-    scr.body.appendChild(h('div', { class: 'home' }, banner, h('div', { class: 'home-grid' }, todayCard, quickCard, statCard, dataCard)));
+    const home = h('div', { class: 'home' }, banner);
+    scr.body.appendChild(home);
     view.appendChild(scr.el);
+    HG.ui.pagedNodes(home, [todayCard, quickCard, statCard, dataCard], 4, 'paged-grid2');
   }
   function kpi(label, value) { return h('div', { class: 'kpi' }, h('span', { class: 'kpi-label', text: label }), h('span', { class: 'kpi-value', text: value })); }
   async function quickBackup() {

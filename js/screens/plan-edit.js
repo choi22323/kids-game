@@ -30,7 +30,16 @@
     clear(st.view);
     const l = st.l;
     const title = st.isNew ? '새 수업 계획' : st.readOnly ? '수업 계획 보기' : '수업 계획 편집';
-    const scr = ui.screen(title, null, st.readOnly ? '상태: ' + L.status[l.status] + ' — 마쳤거나 진행 중인 계획은 고칠 수 없습니다.' : null);
+    const foot = [ui.btn('목록으로', { icon: '◀', onClick: () => HG.router.go('/plans') })];
+    if (st.readOnly) {
+      if (l.status === 'canceled') foot.push(ui.btn('다시 예정으로', { onClick: () => setStatus('planned') }));
+      foot.push(ui.btn('복제', { variant: 'primary', onClick: duplicate }));
+    } else {
+      if (!st.isNew && l.status === 'planned') foot.push(ui.btn('취소 처리', { onClick: () => setStatus('canceled') }));
+      foot.push(ui.btn('저장', { variant: 'primary', icon: '✔', onClick: () => save(false) }));
+      foot.push(ui.btn('저장하고 시작', { variant: 'accent', icon: '▶', onClick: () => save(true) }));
+    }
+    const scr = ui.screen(title, foot, st.readOnly ? L.status[l.status] + ' — 고칠 수 없는 계획입니다.' : null);
     const tabs = h('div', { class: 'tabs', role: 'tablist' });
     const panels = {};
     [['info', '기본 정보'], ['steps', '활동 순서 (' + l.activityPlan.length + ')']].forEach(([k, label]) => {
@@ -42,17 +51,6 @@
     st.view.appendChild(scr.el);
     infoPanel(panels.info);
     stepsPanel(panels.steps);
-    const foot = h('div', { class: 'btn-row end' });
-    foot.appendChild(ui.btn('목록으로', { icon: '◀', onClick: () => HG.router.go('/plans') }));
-    if (st.readOnly) {
-      if (l.status === 'canceled') foot.appendChild(ui.btn('다시 예정으로', { onClick: () => setStatus('planned') }));
-      foot.appendChild(ui.btn('복제', { variant: 'primary', onClick: duplicate }));
-    } else {
-      if (!st.isNew && l.status === 'planned') foot.appendChild(ui.btn('취소 처리', { onClick: () => setStatus('canceled') }));
-      foot.appendChild(ui.btn('저장', { variant: 'primary', icon: '✔', onClick: () => save(false) }));
-      foot.appendChild(ui.btn('저장하고 수업 시작', { variant: 'accent', icon: '▶', onClick: () => save(true) }));
-    }
-    scr.foot.appendChild(foot);
     if (st.errors) { ui.showErrors(st.view, st.errors.filter((e) => (e.tab || 'info') === st.tab)); }
   }
   const mark = () => { st.dirty = true; };
@@ -73,11 +71,11 @@
     const memo = ui.input({ value: l.memo, max: 200, placeholder: '수업 메모(선택)', onInput: (e) => { l.memo = e.target.value; mark(); } });
     [date, title, topic, people, memo].forEach((el) => { el.disabled = ro; });
     if (ro) level.querySelectorAll('button').forEach((b) => { b.disabled = true; });
-    p.appendChild(h('div', { class: 'form-grid' },
+    ui.pagedNodes(p, [
       ui.field('날짜', date, { field: 'date' }), ui.field('제목', title, { field: 'title' }),
       ui.field('주제', topic, { field: 'topicId' }), h('div', { class: 'field' }, h('span', { class: 'label', text: '수준' }), h('div', { class: 'field-input' }, level)),
-      ui.field('참여 인원', people, { field: 'participantCount' }), ui.field('메모', memo, { field: 'memo' })));
-    p.appendChild(h('p', { class: 'notice', text: '⚠ 어르신 성함·연락처 등 개인정보는 적지 마세요. 참여 인원은 숫자만 적습니다.' }));
+      ui.field('참여 인원', people, { field: 'participantCount' }), ui.field('메모', memo, { field: 'memo' }),
+      h('p', { class: 'notice', text: '⚠ 어르신 성함·연락처 등 개인정보는 적지 마세요. 참여 인원은 숫자만 적습니다.' })], 7, 'paged-grid2-top');
   }
   function stepsPanel(p) {
     const l = st.l, ro = st.readOnly;

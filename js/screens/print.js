@@ -99,26 +99,31 @@
     clear(st.view);
     const o = st.o;
     o.topic = topicName();
-    const scr = ui.screen('학습지 출력', [ui.btn('홈으로', { icon: '🏠', onClick: () => HG.router.go('/home') })]);
+    const printBtn = ui.btn('인쇄하기 / PDF로 저장', { variant: 'primary', icon: '🖨', onClick: doPrint });
+    const scr = ui.screen('학습지 출력', [ui.btn('홈으로', { icon: '🏠', onClick: () => HG.router.go('/home') }), printBtn]);
     const panel = h('div', { class: 'card print-panel' });
     const vp = h('div', { class: 'ws-viewport' });
     const pageNav = h('div', { class: 'ws-nav' });
     scr.body.appendChild(h('div', { class: 'split print-split' }, panel, h('div', { class: 'print-preview' }, vp, pageNav)));
     st.view.appendChild(scr.el);
-    const titleIn = ui.input({ value: o.title, max: 40, ariaLabel: '학습지 제목', onInput: (e) => { o.title = e.target.value; } });
-    titleIn.addEventListener('change', () => { o.title = HG.validate.clean(o.title) || '오늘의 복습'; draw(); });
     const secs = h('div', { class: 'toggle-grid' });
     [['trace', '따라쓰기'], ['chosung', '초성'], ['blank', '빈칸 문장'], ['match', '선잇기']].forEach(([k, l]) => secs.appendChild(ui.toggle(l, o.sections[k], (v) => { o.sections[k] = v; draw(); })));
-    const printBtn = ui.btn('인쇄하기 / PDF로 저장', { variant: 'primary', icon: '🖨', onClick: doPrint });
-    panel.append(
-      h('div', { class: 'print-sets' }, h('p', { class: 'strong', text: o.sets.length ? o.sets.map((x) => x.title).join(', ') : '세트를 골라 주세요' }), ui.btn('세트 고르기', { onClick: chooseSets })),
-      ui.field('제목', titleIn),
+    secs.appendChild(ui.toggle('아주 크게', o.size === 'xlarge', (v) => { o.size = v ? 'xlarge' : 'large'; draw(); }));
+    secs.appendChild(ui.toggle('정답지', o.answerKey, (v) => { o.answerKey = v; draw(); }));
+    ui.pagedNodes(panel, [
+      h('p', { class: 'strong print-set-names', text: o.sets.length ? o.sets.map((x) => x.title).join(', ') : '세트를 골라 주세요' }),
+      h('div', { class: 'btn-row' }, ui.btn('세트 고르기', { onClick: chooseSets }), ui.btn('제목 바꾸기', { onClick: editTitle })),
       secs,
-      h('div', { class: 'btn-row' },
-        ui.segmented([{ value: 'large', label: '크게' }, { value: 'xlarge', label: '아주 크게' }], o.size, (v) => { o.size = v; draw(); }, '글자 크기'),
-        ui.stepper({ label: '따라쓰기 빈칸', value: o.repeat, min: 1, max: 3, step: 1, format: (v) => '빈칸 ' + v + '번', onChange: (v) => { o.repeat = v; draw(); } })),
-      h('div', { class: 'btn-row' }, ui.toggle('강사용 정답지', o.answerKey, (v) => { o.answerKey = v; draw(); }), printBtn),
-      h('p', { class: 'muted small', text: "인쇄 창에서 '대상'을 'PDF로 저장'으로 바꾸면 PDF 파일로 저장됩니다." }));
+      ui.stepper({ label: '따라쓰기 빈칸', value: o.repeat, min: 1, max: 3, step: 1, format: (v) => '빈칸 ' + v + '번', onChange: (v) => { o.repeat = v; draw(); } })], 4);
+    async function editTitle() {
+      const input = ui.input({ value: o.title, max: 40, ariaLabel: '학습지 제목' });
+      const ok = await HG.dialog.open({ title: '학습지 제목', body: ui.field('제목', input), actions: [{ label: '취소', value: false }, { label: '바꾸기', value: true, variant: 'primary' }], onOpen: () => setTimeout(() => input.focus(), 0) });
+      if (!ok) return;
+      const v = HG.validate.clean(input.value);
+      if (!(await HG.privacy.confirmSave([v]))) return;
+      o.title = v || '오늘의 복습';
+      draw();
+    }
     function draw() {
       clear(vp); clear(pageNav);
       const any = Object.values(o.sections).some(Boolean);
@@ -133,12 +138,13 @@
       vp.appendChild(holder);
       requestAnimationFrame(() => {
         const pw = pg.offsetWidth, ph = pg.offsetHeight;
-        const sc = Math.min(vp.clientWidth / pw, vp.clientHeight / ph);
+        const sc = Math.min((vp.clientWidth - 20) / pw, (vp.clientHeight - 20) / ph);
         holder.style.setProperty('--sc', String(sc));
         holder.style.setProperty('width', pw * sc + 'px');
         holder.style.setProperty('height', ph * sc + 'px');
       });
       if (r.notes.length) pageNav.appendChild(h('p', { class: 'notice small', text: r.notes.join(' ') }));
+      pageNav.appendChild(h('p', { class: 'muted small', text: "인쇄 창에서 '대상'을 'PDF로 저장'으로 바꾸면 PDF 파일로 저장됩니다." }));
       if (r.pages.length > 1) pageNav.appendChild(ui.pager(st.page + 1, r.pages.length, (p) => { st.page = p - 1; draw(); }));
       else pageNav.appendChild(h('p', { class: 'muted', text: 'A4 1쪽' }));
     }

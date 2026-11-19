@@ -45,28 +45,52 @@
 
   /**
    * 넘치지 않는 만큼만 렌더링하는 페이지 목록. 스크롤 대신 페이지 나눔 (UI_UX.md §4.3)
+   * 목록 자체와 각 항목(카드) 안의 잘림을 모두 검사하고, 크기가 바뀌면 다시 맞춘다.
    * @param {{list:HTMLElement, pager:HTMLElement, items:any[], render:(item,i)=>Node, max:number, empty?:()=>Node}} o
    */
   function pagedList(o) {
-    let first = 0, size = o.max;
-    function fits() { return o.list.scrollHeight <= o.list.clientHeight + 1 && o.list.scrollWidth <= o.list.clientWidth + 1; }
+    let first = 0, lastH = -1, lastW = -1, drawing = false;
+    const clipped = (el) => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
+    function fits() {
+      if (clipped(o.list)) return false;
+      for (const c of o.list.children) {
+        if (c.clientHeight && getComputedStyle(c).overflow !== 'visible' && clipped(c)) return false;
+      }
+      return true;
+    }
     function draw() {
+      if (drawing) return;
+      drawing = true;
       clear(o.list); clear(o.pager);
-      if (!o.items.length) { if (o.empty) o.list.appendChild(o.empty()); return; }
-      size = o.max;
+      if (!o.items.length) { if (o.empty) o.list.appendChild(o.empty()); drawing = false; remember(); return; }
+      let size = Math.min(o.max, o.items.length);
       for (;;) {
-        clear(o.list);
+        clear(o.list); clear(o.pager);
         first = Math.floor(first / size) * size;
         if (first >= o.items.length) first = Math.max(0, Math.floor((o.items.length - 1) / size) * size);
         o.items.slice(first, first + size).forEach((it, i) => o.list.appendChild(o.render(it, first + i)));
-        if (size <= 1 || fits()) break;
+        const pages = Math.ceil(o.items.length / size);
+        if (pages > 1) {
+          const page = Math.floor(first / size) + 1;
+          const sz = size;
+          o.pager.appendChild(pager(page, pages, (p) => { first = (p - 1) * sz; draw(); }));
+        }
+        if (size <= 1 || !o.list.isConnected || fits()) break;
         size--;
       }
-      const pages = Math.ceil(o.items.length / size);
-      if (pages > 1) {
-        const page = Math.floor(first / size) + 1;
-        o.pager.appendChild(pager(page, pages, (p) => { first = (p - 1) * size; draw(); }));
-      }
+      drawing = false;
+      remember();
+    }
+    function remember() { lastH = o.list.clientHeight; lastW = o.list.clientWidth; }
+    if (window.ResizeObserver) {
+      let raf = 0;
+      const ro = new ResizeObserver(() => {
+        if (!o.list.isConnected) { ro.disconnect(); return; }
+        if (drawing || (o.list.clientHeight === lastH && o.list.clientWidth === lastW)) return;
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(draw);
+      });
+      ro.observe(o.list);
     }
     const api = {
       draw,
@@ -75,6 +99,15 @@
       showIndex(i) { first = i; draw(); }
     };
     return api;
+  }
+  /** 미리 만든 노드 목록(폼 줄, 설정 줄, 카드)을 넘치지 않게 쪽으로 나눠 보여 준다 */
+  function pagedNodes(container, nodes, max, cls) {
+    const list = h('div', { class: 'paged ' + (cls || 'paged-col') });
+    const pagerHost = h('div', { class: 'paged-pager' });
+    container.append(list, pagerHost);
+    const pl = pagedList({ list, pager: pagerHost, items: nodes.filter(Boolean), max: max || 99, render: (n) => n });
+    pl.draw();
+    return pl;
   }
 
   function pager(page, pages, go) {
@@ -194,5 +227,5 @@
   }
   function badge(text, kind) { return h('span', { class: 'badge' + (kind ? ' badge-' + kind : ''), text }); }
 
-  HG.ui = { btn, header, screen, emptyState, pagedList, pager, field, input, select, segmented, toggle, stepper, longPress, showErrors, errorSummary, badge };
+  HG.ui = { btn, header, screen, emptyState, pagedList, pagedNodes, pager, field, input, select, segmented, toggle, stepper, longPress, showErrors, errorSummary, badge };
 })();

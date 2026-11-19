@@ -26,8 +26,11 @@
   function render() {
     clear(st.view);
     const s = st.s, ro = s.isBuiltIn;
-    const scr = ui.screen(st.isNew ? '새 문제 세트' : ro ? '기본 자료 보기' : '문제 세트 편집', null,
-      ro ? '🔒 기본 자료는 고칠 수 없습니다. [복제해서 편집]을 눌러 우리 반에 맞게 바꿔 주세요.' : null);
+    const acts = [ui.btn('목록으로', { icon: '◀', onClick: () => HG.router.go('/admin/sets') })];
+    if (ro) acts.push(ui.btn('복제해서 편집', { variant: 'primary', onClick: async () => { const c = await HG.screens.adminSets.duplicate(st.s); st.dirty = false; HG.router.go('/admin/sets/' + c.id); } }));
+    else acts.push(ui.btn('저장', { variant: 'primary', icon: '✔', onClick: save }));
+    const scr = ui.screen(st.isNew ? '새 문제 세트' : ro ? '기본 자료 보기' : '문제 세트 편집', acts,
+      ro ? '🔒 기본 자료는 복제 후 편집' : null);
     const tabs = h('div', { class: 'tabs', role: 'tablist' });
     const count = (tab) => st.errors.filter((e) => e.tab === tab).length;
     [['info', '기본 정보'], ['words', '낱말 (' + s.words.length + ')'], ['sentences', '문장 (' + s.sentences.length + ')'], ['options', '활동 옵션']].forEach(([k, label]) => {
@@ -43,10 +46,6 @@
     if (errs.length) panel.appendChild(ui.errorSummary(errs));
     else if (warns.length) panel.appendChild(h('div', { class: 'warn-summary' }, h('p', { class: 'strong', text: '확인해 주세요 (' + warns.length + '건)' }), h('p', { text: warns[0].msg })));
     ({ info: infoTab, words: wordsTab, sentences: sentTab, options: optTab })[st.tab](panel, ro);
-    const foot = h('div', { class: 'btn-row end' }, ui.btn('목록으로', { icon: '◀', onClick: () => HG.router.go('/admin/sets') }));
-    if (ro) foot.appendChild(ui.btn('복제해서 편집', { variant: 'primary', onClick: async () => { const c = await HG.screens.adminSets.duplicate(st.s); st.dirty = false; HG.router.go('/admin/sets/' + c.id); } }));
-    else foot.appendChild(ui.btn('저장', { variant: 'primary', icon: '✔', onClick: save }));
-    scr.foot.appendChild(foot);
     if (errs.length) ui.showErrors(panel, errs);
     if (ro) panel.querySelectorAll('input, select, button:not(.pager button)').forEach((el) => { if (!el.closest('.pager')) el.disabled = true; });
   }
@@ -57,10 +56,10 @@
     const level = ui.segmented(L.levels.map((v) => ({ value: v, label: L.level[v] })), s.level, (v) => { s.level = v; mark(); }, '수준');
     const desc = ui.input({ value: s.description, max: 100, placeholder: '설명(선택)', onInput: (e) => { s.description = e.target.value; mark(); } });
     const tags = ui.input({ value: (s.tags || []).join(', '), placeholder: '태그(선택, 쉼표로 구분)', onInput: (e) => { s.tags = e.target.value.split(',').map((x) => x.trim()).filter(Boolean); mark(); } });
-    p.appendChild(h('div', { class: 'form-grid one' },
+    ui.pagedNodes(p, [
       ui.field('제목', title, { field: 'title' }), ui.field('주제', topic, { field: 'topicId' }),
       h('div', { class: 'field' }, h('span', { class: 'label', text: '수준' }), h('div', { class: 'field-input' }, level)),
-      ui.field('설명', desc, { field: 'description' }), ui.field('태그', tags, { field: 'tags' })));
+      ui.field('설명', desc, { field: 'description' }), ui.field('태그', tags, { field: 'tags' })], 5, 'paged-col form-narrow');
   }
   function picLabel(w) {
     if (!w.image) return h('span', { class: 'muted', text: '그림 없음' });
@@ -133,8 +132,8 @@
     const av = V.availability(st.s);
     const row = (act, extra) => h('div', { class: 'card opt-row' },
       h('div', { class: 'opt-head' }, ui.toggle(L.activityIcon[act] + ' ' + L.activityShort[act], o[act].enabled !== false, (v) => { o[act].enabled = v; mark(); }),
-        h('span', { class: av[act] ? 'ok' : 'muted', text: av[act] ? '사용 가능' : av.reason[act] })), extra);
-    p.appendChild(h('div', { class: 'opt-grid' },
+        av[act] ? null : h('span', { class: 'muted', text: av.reason[act] })), extra);
+    ui.pagedNodes(p, [
       row('trace', h('div', { class: 'opt-ctrls' },
         ui.segmented([{ value: 'cross', label: '십자 칸' }, { value: 'plain', label: '빈 칸' }], o.trace.gridStyle, (v) => { o.trace.gridStyle = v; mark(); }, '칸 모양'),
         ui.stepper({ label: '반복 쓰기', value: o.trace.repeat, min: 1, max: 3, step: 1, format: (v) => v + '번 쓰기', onChange: (v) => { o.trace.repeat = v; mark(); } }))),
@@ -143,8 +142,7 @@
         ui.toggle('그림 힌트', o.chosung.showImageHint !== false, (v) => { o.chosung.showImageHint = v; mark(); }))),
       row('match', h('div', { class: 'opt-ctrls' },
         ui.segmented([{ value: 3, label: '한 번에 3쌍' }, { value: 4, label: '한 번에 4쌍' }], o.match.pairsPerRound, (v) => { o.match.pairsPerRound = v; mark(); }, '한 번에 짝 수'))),
-      row('blank', null)));
-    if (ro) return;
+      row('blank', null)], 4, 'paged-grid2');
   }
   /** 그림 고르기 대화상자. undefined=취소, null=그림 없음 */
   async function pickImage(w) {

@@ -10,13 +10,13 @@
     const topicsById = {}; topics.forEach((t) => { topicsById[t.id] = t; });
     const scr = ui.screen('문제 세트', [ui.btn('관리자 설정', { icon: '◀', onClick: () => HG.router.go('/admin') }), ui.btn('새 세트', { variant: 'primary', icon: '＋', onClick: () => HG.router.go('/admin/sets/new') })]);
     const list = h('div', { class: 'card-grid' });
-    const side = h('div', { class: 'card filter-panel' });
-    scr.body.appendChild(h('div', { class: 'split split-left' }, side, list));
+    const side = h('div', { class: 'filter-bar' });
+    scr.body.append(side, list);
     view.appendChild(scr.el);
     const search = ui.input({ value: filt.q, placeholder: '제목 검색', ariaLabel: '제목 검색', onInput: (e) => { filt.q = e.target.value; apply(); } });
     side.append(
-      h('label', { class: 'label', text: '주제' }), ui.select([{ value: '', label: '전체 주제' }].concat(topics.map((t) => ({ value: t.id, label: t.name }))), filt.topicId, (v) => { filt.topicId = v; apply(); }, '주제'),
-      h('label', { class: 'label', text: '수준' }), ui.select([{ value: '', label: '전체 수준' }].concat(L.levels.map((v) => ({ value: v, label: L.level[v] }))), filt.level, (v) => { filt.level = v; apply(); }, '수준'),
+      ui.select([{ value: '', label: '전체 주제' }].concat(topics.map((t) => ({ value: t.id, label: t.name }))), filt.topicId, (v) => { filt.topicId = v; apply(); }, '주제'),
+      ui.select([{ value: '', label: '전체 수준' }].concat(L.levels.map((v) => ({ value: v, label: L.level[v] }))), filt.level, (v) => { filt.level = v; apply(); }, '수준'),
       search,
       ui.toggle('숨긴 세트 보기', filt.hidden, (v) => { filt.hidden = v; apply(); }));
     const pl = ui.pagedList({ list, pager: scr.foot, items: [], max: 8,

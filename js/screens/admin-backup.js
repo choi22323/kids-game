@@ -14,7 +14,9 @@
     const restoreIn = fileIn(restoreFlow), setsIn = fileIn(importFlow);
 
     const scr = ui.screen('백업·복원', [ui.btn('관리자 설정', { icon: '◀', onClick: () => HG.router.go('/admin') })]);
-    scr.body.append(restoreIn, setsIn, h('div', { class: 'card-grid two' },
+    scr.body.append(restoreIn, setsIn);
+    view.appendChild(scr.el);
+    ui.pagedNodes(scr.body, [
       h('div', { class: 'card' }, h('h2', { text: '💾 백업 파일 저장' }),
         h('p', { text: lastBackup ? '마지막 백업: ' + F.dateTimeLabel(lastBackup) : '아직 백업한 적이 없습니다.' }),
         h('div', { class: 'btn-row' }, ui.toggle('활동 기록 포함', true, (v) => { opts.includeRecords = v; }), ui.toggle('그림 포함', true, (v) => { opts.includeImages = v; })),
@@ -32,8 +34,7 @@
         h('div', { class: 'btn-row' },
           ui.btn('오래된 기록 정리', { disabled: !old.length, onClick: () => purge(old, '오래된 활동 기록 ' + old.length + '건') }),
           ui.btn('모든 기록 지우기', { variant: 'danger', disabled: !recs.length, onClick: () => purge(recs, '모든 활동 기록 ' + recs.length + '건', true) }),
-          ui.btn('모든 데이터 지우기', { variant: 'danger', onClick: wipe })))));
-    view.appendChild(scr.el);
+          ui.btn('모든 데이터 지우기', { variant: 'danger', onClick: wipe })))], 4, 'paged-grid2');
 
     async function doBackup() {
       try {
