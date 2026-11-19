@@ -5,22 +5,8 @@
   const R = HG.router;
 
   R.add('/home', 'home', { section: 'home' });
-  R.add('/quick', 'quick', { section: 'home' });
-  R.add('/quick/:topic', 'quick', { section: 'home' });
-  R.add('/plans', 'plans', { section: 'plans' });
-  R.add('/plans/:id', 'planEdit', { section: 'plans' });
-  R.add('/run/:id', 'run', { run: true });
-  R.add('/summary/:id', 'summary', { run: true });
-  R.add('/print', 'print', { section: 'print' });
-  R.add('/print/:source', 'print', { section: 'print' });
-  R.add('/stats', 'stats', { section: 'stats' });
-  R.add('/admin', 'adminHome', { section: 'admin', admin: true });
-  R.add('/admin/sets', 'adminSets', { section: 'admin', admin: true });
-  R.add('/admin/sets/:id', 'adminSetEdit', { section: 'admin', admin: true });
-  R.add('/admin/topics', 'adminTopics', { section: 'admin', admin: true });
-  R.add('/admin/images', 'adminImages', { section: 'admin', admin: true });
-  R.add('/admin/backup', 'adminBackup', { section: 'admin', admin: true });
-  R.add('/admin/display', 'adminDisplay', { section: 'admin', admin: true });
+  R.add('/dictate/:id', 'dictate', { run: true });
+  R.add('/settings', 'adminDisplay', { section: 'settings', admin: true });
 
   HG.applySettings = function () {
     const s = HG.state.settings;
@@ -28,7 +14,7 @@
     document.documentElement.classList.toggle('reduce-motion', HG.feedback.reducedMotion());
   };
 
-  const NAV = [['/home', '🏠', '홈', 'home'], ['/plans', '📅', '수업 계획', 'plans'], ['/print', '🖨', '학습지', 'print'], ['/stats', '📊', '통계', 'stats'], ['/admin', '⚙', '관리자 설정', 'admin']];
+  const NAV = [['/home', '🏠', '받아쓰기', 'home'], ['/settings', '⚙', '설정', 'settings']];
   function buildNav() {
     const nav = document.getElementById('mainnav');
     clear(nav);

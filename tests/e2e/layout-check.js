@@ -10,9 +10,7 @@ const { chromium } = require('playwright');
 const URL = 'file://' + path.resolve(__dirname, '../../index.html');
 const VIEWPORTS = [[1920, 1080], [1366, 768], [1280, 720]];
 const SCALES = [1, 1.15, 1.3];
-const ROUTES = ['/home', '/quick', '/quick/topic-family', '/plans', '/plans/new', '/plans/e2e-plan', '/print/set-seed-market-beginner',
-  '/stats', '/admin', '/admin/sets', '/admin/sets/new', '/admin/sets/seed-market-intermediate', '/admin/topics', '/admin/images', '/admin/backup', '/admin/display',
-  '/summary/quick', 'RUN:trace', 'RUN:chosung', 'RUN:match', 'RUN:blank', 'RUN:intro'];
+const ROUTES = ['/home', '/settings', 'RUN:intro', 'RUN:dictation', 'RUN:result'];
 
 async function check(page) {
   return page.evaluate(() => {
@@ -55,27 +53,24 @@ async function check(page) {
       page.on('request', (r) => { if (!/^(file|blob|data):/.test(r.url())) errs.push('외부 요청 ' + r.url()); });
       await page.goto(URL);
       await page.waitForFunction(() => window.HG && HG.state.settings && document.querySelector('.screen'));
-      await page.evaluate(async (s) => {
-        await HG.repo.setSetting('fontScale', s);
-        await HG.db.put('lessons', { id: 'e2e-plan', date: HG.format.todayStr(), title: '점검용 가상 수업', topicId: 'topic-market', level: 'beginner',
-          activityPlan: [{ order: 0, activity: 'trace', problemSetId: 'seed-market-beginner' }, { order: 1, activity: 'blank', problemSetId: 'seed-market-beginner' }],
-          status: 'planned', participantCount: 8, memo: '', startedAt: null, endedAt: null, createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
-        HG.state.quick = { topicId: 'topic-market', level: 'beginner', setId: 'seed-market-beginner', activities: ['trace', 'chosung', 'match', 'blank'] };
-        HG.state.lastRun = { lessonId: null, setIds: ['seed-market-beginner'], stars: 7 };
-      }, sc);
+      await page.evaluate(async (s) => { await HG.repo.setSetting('fontScale', s); }, sc);
       for (const r of ROUTES) {
         if (r.startsWith('RUN:')) {
           const act = r.slice(4);
           await page.evaluate(() => { location.hash = '#/home'; });
           await page.waitForTimeout(150);
-          await page.evaluate((a) => { HG.state.quick.activities = [a === 'intro' ? 'trace' : a]; location.hash = '#/run/quick'; }, act);
-          await page.waitForTimeout(300);
-          if (act !== 'intro') { await page.click('.run-bar [data-role=next]'); await page.waitForTimeout(400); }
+          await page.evaluate(() => { location.hash = '#/dictate/seed-anthem-1'; });
+          await page.waitForTimeout(350);
+          if (act !== 'intro') { await page.click('.run-bar [data-role=next]'); await page.waitForTimeout(450); }
+          if (act === 'result') {
+            for (let i = 0; i < 10; i++) { await page.locator('.run-bar').getByRole('button', { name: '건너뛰기' }).click(); await page.waitForTimeout(150); }
+            await page.waitForTimeout(300);
+          }
         } else {
           await page.evaluate((h) => { location.hash = '#' + h; }, r);
           await page.waitForTimeout(350);
         }
-        if (r === '/admin/sets/seed-market-intermediate') {
+        if (false) {
           for (const tab of ['낱말', '문장', '활동 옵션']) {
             await page.locator('.tab', { hasText: tab }).click();
             await page.waitForTimeout(200);
@@ -83,8 +78,8 @@ async function check(page) {
             if (is.length) { total += is.length; console.log(`[${w}x${hgt} x${sc}] ${r} 탭:${tab}\n  - ` + is.join('\n  - ')); }
           }
         }
-        if (r === '/admin/display') {
-          for (const tab of ['소리·움직임', '학습지·기록', '관리자 잠금']) {
+        if (r === '/settings') {
+          for (const tab of ['읽어 주기·소리', '관리자 잠금']) {
             await page.locator('.tab', { hasText: tab }).click();
             await page.waitForTimeout(250);
             const is = await check(page);

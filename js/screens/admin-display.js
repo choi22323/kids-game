@@ -2,17 +2,18 @@
 (function () {
   'use strict';
   const { h } = HG.dom;
-  const ui = HG.ui, V = HG.validate;
+  const ui = HG.ui;
+  const V = { clean: (x) => String(x || '').trim() };
   let tab = 'screen';
 
   async function mount(view) {
     const s = HG.state.settings;
     const set = (k, v) => HG.repo.setSetting(k, v).then(() => HG.applySettings()).catch(() => HG.toast.show('저장하지 못했습니다.'));
-    const scr = ui.screen('화면·소리', [ui.btn('관리자 설정', { icon: '◀', onClick: () => HG.router.go('/admin') }),
+    const scr = ui.screen('설정', [ui.btn('홈으로', { icon: '🏠', onClick: () => HG.router.go('/home') }),
       ui.btn('기본값으로', { onClick: async () => { if (await HG.dialog.confirm('기본값으로 되돌리기', '화면·소리 설정을 처음 상태로 되돌릴까요? (PIN은 유지)', { ok: '되돌리기' })) { await HG.repo.resetSettings(); HG.applySettings(); HG.router.rerender(); } } })]);
     const tabs = h('div', { class: 'tabs', role: 'tablist' });
     const panel = h('div', { class: 'tab-panel', role: 'tabpanel' });
-    [['screen', '화면'], ['sound', '소리·움직임'], ['print', '학습지·기록'], ['pin', '관리자 잠금']].forEach(([k, l]) => tabs.appendChild(
+    [['screen', '화면'], ['sound', '읽어 주기·소리'], ['pin', '관리자 잠금']].forEach(([k, l]) => tabs.appendChild(
       h('button', { type: 'button', role: 'tab', class: 'tab' + (tab === k ? ' is-cur' : ''), 'aria-selected': String(tab === k), text: l, on: { click: () => { tab = k; HG.router.rerender(); } } })));
     scr.body.appendChild(h('div', { class: 'editor' }, tabs, panel));
     view.appendChild(scr.el);
@@ -27,12 +28,19 @@
       ui.pagedNodes(panel, [
         row('글자 크기', ui.segmented([{ value: 1, label: '보통' }, { value: 1.15, label: '크게' }, { value: 1.3, label: '아주 크게' }], s.fontScale, (v) => set('fontScale', v), '글자 크기'),
           '어떤 크기에서도 화면이 넘치지 않도록 한 화면의 항목 수가 조정됩니다.'),
+        row('칸 안 흐린 글씨', ui.segmented([{ value: 'off', label: '없음' }, { value: 'after', label: '정답 확인 때만' }, { value: 'always', label: '쓸 때부터 보기' }], s.dictGuide, (v) => set('dictGuide', v), '칸 안 흐린 글씨'),
+          '기본은 없음입니다. "쓸 때부터 보기"는 따라쓰기처럼 흐린 글씨가 칸에 보입니다.'),
+        row('정답 판정', h('div', { class: 'btn-row' }, ui.toggle('자동 판정', s.dictJudge, (v) => set('dictJudge', v)),
+          ui.segmented([{ value: 'strict', label: '엄격하게' }, { value: 'normal', label: '보통' }], s.dictStrict, (v) => set('dictStrict', v), '판정 기준')),
+          '글씨 모양을 비교하는 보조 판정입니다. 필기 습관에 따라 틀릴 수 있어 강사님이 [맞음/틀림으로 바꾸기]로 고칠 수 있습니다.'),
         row('필기 굵기', h('div', { class: 'btn-row' }, ui.stepper({ label: '필기 굵기', value: s.traceStrokeWidth, min: 12, max: 40, step: 4, format: (v) => v + 'px', onChange: (v) => { set('traceStrokeWidth', v); drawPreview(v); } }), preview)),
         row('문제 순서', ui.toggle('문제 섞기', s.shuffleQuestions, (v) => set('shuffleQuestions', v)))], 5);
       drawPreview(s.traceStrokeWidth);
     } else if (tab === 'sound') {
       ui.pagedNodes(panel, [
-        row('효과음', h('div', { class: 'btn-row' }, ui.toggle('소리 켜기', s.soundEnabled, (v) => set('soundEnabled', v)),
+        row('읽기 속도', h('div', { class: 'btn-row' }, ui.stepper({ label: '읽기 속도', value: s.ttsRate, min: 0.5, max: 1.2, step: 0.05, format: (v) => (v <= 0.7 ? '아주 천천히' : v <= 0.85 ? '천천히' : v <= 1 ? '보통' : '조금 빠르게') + ' (' + Math.round(v * 100) + '%)', onChange: (v) => set('ttsRate', v) }),
+          ui.btn('들어 보기', { icon: '🔊', onClick: () => HG.tts.speak('무궁화 꽃이 피었습니다.') })), HG.tts.voice() ? '음성: ' + HG.tts.voiceLabel() : '한국어 음성을 찾지 못했습니다.'),
+        row('효과음', h('div', { class: 'btn-row' }, ui.toggle('효과음 켜기', s.soundEnabled, (v) => set('soundEnabled', v)),
           ui.btn('들어 보기', { icon: '♪', onClick: () => { if (!HG.audio.play('correct')) HG.toast.show('소리가 꺼져 있거나 이 브라우저에서 소리를 낼 수 없습니다.'); } }))),
         row('음량', ui.stepper({ label: '음량', value: Math.round(s.volume * 10), min: 0, max: 10, step: 1, format: (v) => v * 10 + '%', onChange: (v) => set('volume', v / 10) })),
         row('애니메이션', ui.segmented([{ value: 'auto', label: '컴퓨터 설정 따름' }, { value: 'on', label: '줄이기' }, { value: 'off', label: '모두 보이기' }], s.reduceMotion, (v) => set('reduceMotion', v), '애니메이션'))], 5);

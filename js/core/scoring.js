@@ -1,7 +1,7 @@
 /* 점수·별 자동 계산 (FEATURES.md F-10) */
 (function () {
   'use strict';
-  const POINTS = { first: 10, retry: 7, revealed: 3, skipped: 0 };
+  const POINTS = { first: 10, retry: 7, revealed: 3, wrong: 3, skipped: 0 };
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 
   function traceLetterScore(coverage, outside) {
@@ -27,7 +27,7 @@
   }
   function buildRecord(o) {
     const items = o.items || [];
-    const c = { first: 0, retry: 0, revealed: 0, skipped: 0 };
+    const c = { first: 0, retry: 0, revealed: 0, wrong: 0, skipped: 0 };
     items.forEach((r) => { c[r.result] = (c[r.result] || 0) + 1; });
     const participated = items.length - c.skipped > 0;
     const score = activityScore(items, o.activity);
@@ -48,6 +48,7 @@
       correctFirstTry: c.first,
       correctAfterRetry: c.retry,
       revealed: c.revealed,
+      wrong: c.wrong,
       skipped: c.skipped,
       hintsUsed: o.hintsUsed || 0,
       avgCoverage: o.activity === 'trace' && covs.length ? Math.round((covs.reduce((a, b) => a + b, 0) / covs.length) * 1000) / 1000 : null,
