@@ -41,6 +41,17 @@
   describe('받아쓰기 칸', () => {
     it('띄어쓰기도 한 칸', () => assert.eq(HG.activities.dictation.cells('동해 물과'), ['동', '해', ' ', '물', '과']));
     it('앞뒤 공백 제거', () => assert.eq(HG.activities.dictation.cells(' 대한 ').length, 2));
+    it('칸 나누기: 한 줄 최대 칸 수를 주면 고르게 나눔', () => {
+      assert.eq(HG.activities.dictation.rowsOf(13, 5), [5, 4, 4]);
+      assert.eq(HG.activities.dictation.rowsOf(15, 4), [4, 4, 4, 3]);
+    });
+    it('화면에 맞춰 칸이 가장 크게: 휴대폰 세로는 여러 줄, 칠판은 한두 줄', () => {
+      const opts = { copies: 1, gap: 6, rgap: 12, labelH: 0 };
+      const phone = HG.activities.dictation.fit(13, 360, 520, opts);
+      const board = HG.activities.dictation.fit(13, 1800, 600, opts);
+      assert.ok(phone.rows.length >= 3 && phone.size >= 60, JSON.stringify(phone));
+      assert.ok(board.rows.length <= 2 && board.size >= 150, JSON.stringify(board));
+    });
     it('10칸 이하는 한 줄, 넘으면 두 줄', () => {
       assert.eq(HG.activities.dictation.rowsOf(9), [9]);
       assert.eq(HG.activities.dictation.rowsOf(14), [7, 7]);

@@ -29,13 +29,32 @@
 
   /** 문장 → 받아쓰기 칸(띄어쓰기도 한 칸). 칸이 너무 많으면 두 줄 */
   function cells(text) { return Array.from(HG.hangul.norm(text).trim()); }
-  function rowsOf(n) { return n <= 10 ? [n] : [Math.ceil(n / 2), Math.floor(n / 2)]; }
+  /** n칸을 한 줄 최대 max칸으로 고르게 나눔: rowsOf(13) → [7, 6] */
+  function rowsOf(n, max) {
+    max = max || 10;
+    if (n <= max) return [n];
+    const r = Math.ceil(n / max), base = Math.floor(n / r), extra = n % r;
+    return Array.from({ length: r }, (_, i) => base + (i < extra ? 1 : 0));
+  }
+  /** 화면 크기에 맞춰 칸이 가장 크게 보이는 줄 나눔을 고른다 (휴대폰 세로: 줄을 늘림, 가로·칠판: 한 줄에 많이) */
+  function fit(n, aw, ah, opts) {
+    let best = null;
+    for (let max = 10; max >= 3; max--) {
+      const rows = rowsOf(n, max);
+      const perRow = Math.max(...rows);
+      const nRows = rows.length * opts.copies;
+      const size = Math.floor(Math.min((aw - opts.gap * (perRow - 1)) / perRow, (ah - opts.labelH - opts.rgap * (nRows - 1)) / nRows, 220));
+      if (!best || size > best.size) best = { rows, perRow, size };
+    }
+    return best;
+  }
 
   function start(ctx) {
     const base = Math.max(10, Math.round(HG.state.settings.traceStrokeWidth * 0.75));
     const css = getComputedStyle(document.documentElement);
     const inkColor = css.getPropertyValue('--color-ink-stroke').trim() || '#172332';
     const guideColor = css.getPropertyValue('--color-guide').trim() || '#C9C2B4';
+    const answerColor = css.getPropertyValue('--color-navy').trim() || '#1E3A5F';
     const opt = () => HG.state.settings;
     const results = [];
     let idx = 0;
@@ -88,13 +107,20 @@
     function layout() {
       if (!s || !s.area.isConnected) return;
       const cs = cells(s.item.text);
-      const rows = rowsOf(cs.length);
       const aw = s.area.clientWidth, ah = s.area.clientHeight;
-      const gap = 10, rgap = s.revealed ? 12 : 24;
-      const labelH = s.revealed ? 44 : 0;
-      const perRow = Math.max(...rows);
-      const nRows = rows.length * (s.revealed ? 2 : 1);
-      const size = Math.max(64, Math.floor(Math.min((aw - gap * (perRow - 1)) / perRow, (ah - labelH - rgap * (nRows - 1)) / nRows, 220)));
+      const small = aw < 700 || ah < 420;
+      const gap = small ? 6 : 10;
+      // 정답 칸을 아래에 둘 자리가 모자라면(휴대폰 가로 등) 내 칸 안에 정답을 흐리게 겹쳐 보여 준다
+      let mode = 'below';
+      let f = fit(cs.length, aw, ah, { copies: s.revealed ? 2 : 1, gap, rgap: s.revealed ? 8 : (small ? 12 : 24), labelH: s.revealed ? (small ? 32 : 44) : 0 });
+      if (s.revealed && f.size < 48) {
+        const o = fit(cs.length, aw, ah, { copies: 1, gap, rgap: small ? 12 : 24, labelH: small ? 32 : 44 });
+        if (o.size > f.size * 1.3) { mode = 'overlay'; f = o; }
+      }
+      const rows = f.rows, perRow = f.perRow;
+      const rgap = s.revealed && mode === 'below' ? 8 : (small ? 12 : 24);
+      const labelH = s.revealed ? (small ? 32 : 44) : 0;
+      const size = Math.max(28, f.size);
       const W = perRow * size + (perRow - 1) * gap;
       const H = rows.length * size + (rows.length - 1) * rgap; // 내가 쓰는 칸 영역
       if (s.layout && s.layout.size !== size) {
@@ -103,16 +129,18 @@
       }
       const place = (top) => { const out = []; let ci = 0; rows.forEach((n, r) => { for (let i = 0; i < n; i++) { out.push({ x: i * (size + gap), y: top + r * (size + rgap), size, ch: cs[ci] }); ci++; } }); return out; };
       const boxes = place(0);
-      s.layout = { W, H, size, boxes };
+      s.layout = { W, H, size, boxes, mode };
       clear(s.area);
-      const totalH = s.revealed ? H * 2 + labelH : H;
+      const totalH = !s.revealed ? H : mode === 'below' ? H * 2 + labelH : H + labelH;
       const row = h('div', { class: 'dict-row', style: { width: W + 'px', height: totalH + 'px' } });
       s.boxEls = boxes.map((b) => {
         const el = h('div', { class: 'trace-box is-cross' + (b.ch === ' ' ? ' is-space' : ''), style: { left: b.x + 'px', top: b.y + 'px', width: b.size + 'px', height: b.size + 'px' } });
         row.appendChild(el);
         return el;
       });
-      if (s.revealed) {
+      if (s.revealed && mode === 'overlay') {
+        row.appendChild(h('div', { class: 'dict-answer-label', style: { top: H + 'px', height: labelH + 'px', width: W + 'px' }, text: '정답: ' + s.item.text }));
+      } else if (s.revealed) {
         row.appendChild(h('div', { class: 'dict-answer-label', style: { top: H + 'px', height: labelH + 'px', width: W + 'px' }, text: '▼ 정답과 비교해 보세요' }));
         place(H + labelH).forEach((b) => row.appendChild(h('div', { class: 'trace-box is-cross is-answer' + (b.ch === ' ' ? ' is-space' : ''), 'aria-hidden': 'true',
           style: { left: b.x + 'px', top: b.y + 'px', width: b.size + 'px', height: b.size + 'px', 'font-size': Math.round(b.size * 0.72) + 'px' } }, b.ch === ' ' ? '' : b.ch)));
@@ -122,25 +150,30 @@
       s.ink = h('canvas', { class: 'trace-ink', role: 'img', 'aria-label': '받아쓰기 칸 ' + cs.length + '칸 (띄어쓰기 포함)' });
       [s.guide, s.ink].forEach((c) => { c.width = Math.round(W * dpr); c.height = Math.round(H * dpr); c.style.setProperty('width', W + 'px'); c.style.setProperty('height', H + 'px'); row.appendChild(c); });
       s.area.appendChild(row);
+      if (ro && !s.observed) { ro.observe(s.area); s.observed = true; }
+      lastArea = s.area.clientWidth + 'x' + s.area.clientHeight;
       s.gctx = s.guide.getContext('2d'); s.gctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       s.ictx = s.ink.getContext('2d', { desynchronized: true }) || s.ink.getContext('2d');
       s.ictx.setTransform(dpr, 0, 0, dpr, 0, 0);
       s.ictx.lineCap = 'round'; s.ictx.lineJoin = 'round'; s.ictx.strokeStyle = inkColor; s.ictx.fillStyle = inkColor;
       s.strokes.forEach((st) => { for (let i = 0; i < st.pts.length; i++) segment(s.ictx, st, i); if (st.ended) tail(s.ictx, st); });
-      if (opt().dictGuide === 'always') drawGuide();
+      if (s.revealed && mode === 'overlay') drawGuide(answerColor, 0.55);
+      else if (opt().dictGuide === 'always') drawGuide();
       bindInk();
     }
     /** (선택) 쓸 때부터 칸 안에 흐린 글씨 */
-    function drawGuide() {
+    function drawGuide(color, alpha) {
       const c = s.gctx;
       c.clearRect(0, 0, s.layout.W, s.layout.H);
-      c.fillStyle = guideColor;
+      c.fillStyle = color || guideColor;
+      c.globalAlpha = alpha == null ? 1 : alpha;
       c.textAlign = 'center'; c.textBaseline = 'middle';
       s.layout.boxes.forEach((b) => {
         if (b.ch === ' ') return;
         c.font = '500 ' + Math.round(b.size * 0.72) + 'px ' + FONT;
         c.fillText(b.ch, b.x + b.size / 2, b.y + b.size * 0.53);
       });
+      c.globalAlpha = 1;
     }
     function width(e) { return e.pointerType === 'pen' && e.pressure > 0 ? base * (0.8 + 0.4 * e.pressure) : base; }
     function addPoint(e) {
@@ -177,12 +210,13 @@
     function erase() {
       s.strokes = [];
       if (s.ictx) s.ictx.clearRect(0, 0, s.layout.W, s.layout.H);
-      if (s.revealed) { s.revealed = false; s.answer.textContent = ''; layout(); bar(); }
+      if (s.revealed) { s.revealed = false; s.answer.textContent = ''; bar(); layout(); }
     }
     function submit() {
       if (!s.strokes.length) { HG.toast.show('들은 문장을 칸에 써 볼까요?'); HG.feedback.announce('들은 문장을 칸에 써 볼까요?'); return; }
       s.attempts++;
       s.revealed = true;
+      bar();
       layout();
       s.answer.textContent = '정답: ' + s.item.text;
       results[idx] = { itemId: s.item.id, text: s.item.text, attempts: s.attempts, result: s.attempts > 1 ? 'retry' : 'first', listens: s.listens };
@@ -218,12 +252,21 @@
     }
     const onResize = () => { if (s && s.layout) layout(); };
     window.addEventListener('resize', onResize);
+    let lastArea = '', raf = 0;
+    const ro = window.ResizeObserver ? new ResizeObserver(() => {
+      if (!s || !s.area || !s.area.isConnected || !s.layout) return;
+      const k = s.area.clientWidth + 'x' + s.area.clientHeight;
+      if (k === lastArea) return;
+      lastArea = k;
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(layout);
+    }) : null;
     render();
     return {
-      destroy() { HG.tts.stop(); window.removeEventListener('resize', onResize); root.remove(); },
+      destroy() { HG.tts.stop(); window.removeEventListener('resize', onResize); if (ro) ro.disconnect(); root.remove(); },
       partial() { return results.filter(Boolean); },
       listen: () => listen()
     };
   }
-  HG.activities.dictation = { id: 'dictation', start, cells, rowsOf };
+  HG.activities.dictation = { id: 'dictation', start, cells, rowsOf, fit };
 })();

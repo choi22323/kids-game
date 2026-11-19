@@ -39,7 +39,8 @@
   function paint() {
     if (!st || !st.soundBtn) return;
     const on = HG.state.settings.soundEnabled;
-    st.soundBtn.textContent = on ? '🔔 효과음' : '🔕 효과음';
+    clear(st.soundBtn);
+    st.soundBtn.append(h('span', { class: 'btn-icon', 'aria-hidden': 'true', text: on ? '🔔' : '🔕' }), h('span', { text: '효과음' }));
     st.soundBtn.setAttribute('aria-label', on ? '효과음 끄기' : '효과음 켜기');
     const sc = HG.state.settings.fontScale;
     st.fontBtn.textContent = sc >= 1.3 ? '가 보통' : sc >= 1.15 ? '가++' : '가+';
