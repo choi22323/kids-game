@@ -16,7 +16,7 @@
 
   describe('받아쓰기 자료', () => {
     it('애국가 1절 시험용 10문장', () => {
-      const s = HG.seed.SETS[0];
+      const s = HG.seed.SETS.find((x) => x.id === 'seed-anthem-1');
       assert.eq(s.kind, 'dictation');
       assert.eq(s.sentences.length, 10);
       assert.eq(s.sentences.map((x) => x.text).join(' '), '동해 물과 백두산이 마르고 닳도록 하느님이 보우하사 우리나라 만세 무궁화 삼천리 화려 강산 대한 사람 대한으로 길이 보전하세');
@@ -24,11 +24,11 @@
     it('설치 후 받아쓰기 세트만 목록에 나옴', async () => {
       await HG.db.put('problemSets', { id: 'old-set', title: '이전 자료', words: [], sentences: [] });
       const list = await HG.seed.dictationSets();
-      assert.eq(list.map((s) => s.id), ['seed-anthem-1']);
+      assert.eq(list.map((s) => s.id).sort(), ['seed-anthem-1', 'seed-woorimal-2']);
     });
     it('재설치해도 중복 없음', async () => {
       await HG.seed.install(true); await HG.seed.install(true);
-      assert.eq((await HG.seed.dictationSets()).length, 1);
+      assert.eq((await HG.seed.dictationSets()).length, 2);
     });
   });
 
@@ -40,7 +40,20 @@
       assert.eq(HG.activities.dictation.rowsOf(14), [7, 7]);
       assert.eq(HG.activities.dictation.rowsOf(13), [7, 6]);
     });
-    it('시험용 문장은 모두 한 줄(10칸 이하)', () => HG.seed.SETS[0].sentences.forEach((x) => assert.ok(HG.activities.dictation.cells(x.text).length <= 10, x.text)));
+    it('애국가 문장은 한 줄(10칸 이하)', () => HG.seed.SETS.find((x) => x.id === 'seed-anthem-1').sentences.forEach((x) => assert.ok(HG.activities.dictation.cells(x.text).length <= 10, x.text)));
+    it('우리말 우리글 10문장(86~95), 긴 문장은 두 줄', () => {
+      const s = HG.seed.SETS.find((x) => x.id === 'seed-woorimal-2');
+      assert.eq(s.sentences.length, 10);
+      assert.eq(s.sentences[0].id, 's86');
+      assert.eq(s.sentences[9].id, 's95');
+      assert.eq(HG.activities.dictation.rowsOf(HG.activities.dictation.cells('네 몫의 뱃삯을 가져오너라.').length), [8, 7]);
+    });
+    it('문장부호 칸: 비우면 틀림(문장부호 빠짐), 무언가 쓰면 모양은 판정하지 않고 맞음', () => {
+      const c = document.createElement('canvas'); c.width = 200; c.height = 200;
+      assert.eq(HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '.' }).reason, 'empty');
+      const x = c.getContext('2d'); x.beginPath(); x.arc(60, 160, 14, 0, 7); x.fill();
+      assert.ok(HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '.' }).ok);
+    });
   });
 
   describe('읽어 주기', () => {
@@ -52,6 +65,14 @@
       speechSynthesis.speak = orig;
       assert.eq(spoken, ['동', '해', '물', '과']);
       assert.eq(idx, [0, 1, 3, 4, -1]);
+    });
+    it('한 글자씩 읽기: 문장부호는 읽지 않음', async () => {
+      const spoken = [];
+      const orig = speechSynthesis.speak;
+      speechSynthesis.speak = (u) => { spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 5); };
+      await new Promise((res) => HG.tts.speakSyllables('좋니?', { gap: 5, wordGap: 10, onend: res }));
+      speechSynthesis.speak = orig;
+      assert.eq(spoken, ['좋', '니']);
     });
     it('음성이 없어도 오류 없이 false/true 반환', () => {
       const r = HG.tts.speak('시험', { onend: () => {} });

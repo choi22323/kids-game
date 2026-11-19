@@ -53,7 +53,7 @@
     let i = 0, anyOk = false;
     const nextChar = () => {
       if (my !== seq) return;
-      while (i < chars.length && /\s/.test(chars[i])) { i++; }
+      while (i < chars.length && !/[가-힣0-9A-Za-z]/.test(chars[i])) { i++; }
       if (i >= chars.length) { if (opts.onIndex) opts.onIndex(-1); if (opts.onend) opts.onend(anyOk); return; }
       const idx = i;
       if (opts.onIndex) opts.onIndex(idx);
@@ -69,7 +69,7 @@
         fired = true;
         if (ok) anyOk = true;
         i = idx + 1;
-        const pause = i < chars.length && /\s/.test(chars[i]) ? wordGap : gap;
+        const pause = i < chars.length && !/[가-힣0-9A-Za-z]/.test(chars[i]) ? wordGap : gap;
         timer = setTimeout(nextChar, pause);
       };
       u.onend = () => after(true);
