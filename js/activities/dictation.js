@@ -50,7 +50,7 @@
       ctx.onProgress(idx, ctx.items.length);
       s = { item, strokes: [], cur: null, active: null, rect: null, revealed: false, listens: 0, attempts: 0, layout: null, marks: null, correct: null };
       const listenBtn = ui.btn('다시 듣기', { variant: 'primary', icon: '🔊', cls: 'btn-listen', onClick: () => listen() });
-      const slowBtn = ui.btn('천천히 듣기', { icon: '🐢', onClick: () => listen(0.6) });
+      const slowBtn = ui.btn('천천히 한 글자씩', { icon: '🐢', onClick: () => listen(true) });
       s.count = h('p', { class: 'dict-count', 'aria-live': 'polite' });
       s.status = h('p', { class: 'dict-status', 'aria-live': 'polite' });
       const top = h('div', { class: 'dict-top' },
@@ -68,14 +68,18 @@
       bar();
       requestAnimationFrame(() => { layout(); setTimeout(() => listen(), 350); });
     }
-    function listen(rate) {
+    /** slow=true: 한 글자씩 또박또박(읽는 칸에 불이 들어옴), 아니면 문장 전체를 설정 속도로 */
+    function listen(slow) {
       s.listens++;
       s.count.textContent = '들은 횟수: ' + s.listens + '번';
-      const started = HG.tts.speak(s.item.text, {
-        rate: rate || undefined,
-        onstart: () => { s.status.textContent = '🔊 읽고 있습니다…'; },
-        onend: (ok) => { s.status.textContent = ok ? '' : '소리를 내지 못했습니다.'; }
-      });
+      const mark = (i) => { (s.boxEls || []).forEach((el, k) => el.classList.toggle('is-reading', k === i)); };
+      const common = {
+        onstart: () => { s.status.textContent = slow ? '🐢 한 글자씩 읽고 있습니다…' : '🔊 읽고 있습니다…'; },
+        onend: (ok) => { mark(-1); s.status.textContent = ok ? '' : '소리를 내지 못했습니다.'; }
+      };
+      const started = slow
+        ? HG.tts.speakSyllables(s.item.text, Object.assign({ rate: Math.min(0.8, HG.state.settings.ttsRate), onIndex: mark }, common))
+        : HG.tts.speak(s.item.text, common);
       if (!started) s.status.textContent = '이 브라우저는 읽어 주기를 지원하지 않습니다.';
     }
     function layout() {
@@ -100,7 +104,7 @@
       s.boxEls = boxes.map((b, i) => {
         const m = s.marks && s.marks[i];
         const el = h('div', { class: 'trace-box is-cross' + (b.ch === ' ' ? ' is-space' : '') + (m ? (m.ok ? ' is-ok' : ' is-bad') : ''), style: { left: b.x + 'px', top: b.y + 'px', width: b.size + 'px', height: b.size + 'px' } },
-          m ? h('span', { class: 'box-mark', 'aria-hidden': 'true', text: m.ok ? '✔' : '?' }) : null);
+          m ? h('span', { class: 'box-mark', 'aria-hidden': 'true', text: (m.ok ? '✔' : '?') + (m.pct != null ? ' ' + m.pct + '%' : '') }) : null);
         row.appendChild(el);
         return el;
       });
@@ -176,8 +180,7 @@
       const x = c.getContext('2d');
       x.lineCap = 'round'; x.lineJoin = 'round'; x.strokeStyle = '#000'; x.fillStyle = '#000';
       s.strokes.forEach((st) => { for (let i = 0; i < st.pts.length; i++) segment(x, st, i); if (st.ended) tail(x, st); });
-      const margin = opt().dictStrict === 'normal' ? 0.3 : 0.1;
-      return boxes.map((b) => HG.hw.judgeBox(c, b, { margin }));
+      return boxes.map((b) => HG.hw.judgeBox(c, b, { minPct: opt().dictMinPct }));
     }
     function showAnswer() {
       clear(s.answer);

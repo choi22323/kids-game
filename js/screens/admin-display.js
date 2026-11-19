@@ -31,8 +31,8 @@
         row('칸 안 흐린 글씨', ui.segmented([{ value: 'off', label: '없음' }, { value: 'after', label: '정답 확인 때만' }, { value: 'always', label: '쓸 때부터 보기' }], s.dictGuide, (v) => set('dictGuide', v), '칸 안 흐린 글씨'),
           '기본은 없음입니다. "쓸 때부터 보기"는 따라쓰기처럼 흐린 글씨가 칸에 보입니다.'),
         row('정답 판정', h('div', { class: 'btn-row' }, ui.toggle('자동 판정', s.dictJudge, (v) => set('dictJudge', v)),
-          ui.segmented([{ value: 'strict', label: '엄격하게' }, { value: 'normal', label: '보통' }], s.dictStrict, (v) => set('dictStrict', v), '판정 기준')),
-          '글씨 모양을 비교하는 보조 판정입니다. 필기 습관에 따라 틀릴 수 있어 강사님이 [맞음/틀림으로 바꾸기]로 고칠 수 있습니다.'),
+          ui.stepper({ label: '맞음 기준 일치도', value: s.dictMinPct, min: 30, max: 95, step: 5, format: (v) => '일치도 ' + v + '% 이상 맞음', onChange: (v) => set('dictMinPct', v) })),
+          '칸마다 쓴 글씨가 정답 글자 모양과 얼마나 겹치는지(일치도)를 봅니다. 기본 60%. 보조 판정이므로 강사님이 [맞음/틀림으로 바꾸기]로 고칠 수 있습니다.'),
         row('필기 굵기', h('div', { class: 'btn-row' }, ui.stepper({ label: '필기 굵기', value: s.traceStrokeWidth, min: 12, max: 40, step: 4, format: (v) => v + 'px', onChange: (v) => { set('traceStrokeWidth', v); drawPreview(v); } }), preview)),
         row('문제 순서', ui.toggle('문제 섞기', s.shuffleQuestions, (v) => set('shuffleQuestions', v)))], 5);
       drawPreview(s.traceStrokeWidth);

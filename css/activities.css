@@ -162,3 +162,4 @@ img.match-pic { max-width: 80%; object-fit: contain; }
   .dict-novoice span { white-space: normal; max-width: 16em; }
   .dict-answer { font-size: max(40px, calc(var(--fs-body) * 1.4)); }
 }
+.trace-box.is-reading { border-color: var(--color-navy); box-shadow: 0 6px 0 #9FB2CC, 0 0 0 6px rgba(30, 58, 95, .3); transform: translateY(-4px); transition: transform .12s, box-shadow .12s; }

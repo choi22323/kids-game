@@ -44,6 +44,15 @@
   });
 
   describe('읽어 주기', () => {
+    it('한 글자씩 읽기: 글자마다 따로, 띄어쓰기는 건너뛰고 칸 번호 알림', async () => {
+      const spoken = [], idx = [];
+      const orig = speechSynthesis.speak;
+      speechSynthesis.speak = (u) => { spoken.push(u.text); setTimeout(() => u.onend && u.onend(), 5); };
+      await new Promise((res) => HG.tts.speakSyllables('동해 물과', { gap: 5, wordGap: 10, onIndex: (i) => idx.push(i), onend: res }));
+      speechSynthesis.speak = orig;
+      assert.eq(spoken, ['동', '해', '물', '과']);
+      assert.eq(idx, [0, 1, 3, 4, -1]);
+    });
     it('음성이 없어도 오류 없이 false/true 반환', () => {
       const r = HG.tts.speak('시험', { onend: () => {} });
       assert.ok(typeof r === 'boolean');
@@ -88,9 +97,20 @@
       const r = HG.hw.judgeBox(canvas((x) => { x.beginPath(); x.moveTo(30, 100); x.lineTo(170, 100); x.stroke(); }), { x: 0, y: 0, size: 200, ch: '물' });
       assert.ok(!r.ok);
     });
-    it('설정 기본값: 흐린 글씨 없음, 자동 판정 켜짐, 엄격하게', () => {
+    it('설정 기본값: 흐린 글씨 없음, 자동 판정 켜짐, 맞음 기준 일치도 60%', () => {
       const d = HG.repo.defaults();
-      assert.eq([d.dictGuide, d.dictJudge, d.dictStrict], ['off', true, 'strict']);
+      assert.eq([d.dictGuide, d.dictJudge, d.dictMinPct], ['off', true, 60]);
+    });
+    it('일치도: 같은 글자 ≥ 90%, 기준(%)을 높이면 같은 글씨도 틀림이 될 수 있음', () => {
+      const c = canvas((x) => { x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '500 144px sans-serif'; x.fillText('물', 100, 106); });
+      const r = HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '물' });
+      assert.ok(r.ok && r.pct >= 90, JSON.stringify(r));
+      assert.ok(!HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '물' }, { minPct: 101 }).ok);
+    });
+    it('일치도: 전혀 다른 글자는 낮음', () => {
+      const c = canvas((x) => { x.textAlign = 'center'; x.textBaseline = 'middle'; x.font = '500 144px sans-serif'; x.fillText('ㅣ', 100, 106); });
+      const r = HG.hw.judgeBox(c, { x: 0, y: 0, size: 200, ch: '물' });
+      assert.ok(!r.ok && r.pct < 60, JSON.stringify(r));
     });
     it('틀림 결과는 별 계산에 참여 점수로 반영', () => {
       const r = S.buildRecord({ items: [item('first'), item('wrong')], activity: 'dictation', set: HG.seed.SETS[0], startedAt: new Date().toISOString() });
